@@ -25,7 +25,7 @@ module.exports = {
     editLinkText: "帮助我们改善此页面！",
     nav: [
       { text: "首页", link: "/" },
-      { text: "源码分析", link: "/guide/guide" },
+      { text: "源码分析", link: "/analysis/prepare" },
       {
         text: "其他",
         items: [
@@ -37,25 +37,9 @@ module.exports = {
     ],
     displayAllHeaders: true,
     sidebar: [
-
       '/analysis/prepare',
       '/analysis/instance-create',
+      '/analysis/axios-form',
     ]
-    // sidebar:{
-    //   '/analysis/':[
-    //     {
-    //       title: "准备工作",
-    //       children:[
-    //         'prepare'
-    //       ]
-    //     },
-    //     {
-    //       title: "对象创建过程",
-    //       children:[
-    //         'instance-create'
-    //       ]
-    //     }
-    //   ]
-    // }
   }
 };

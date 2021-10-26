@@ -4,9 +4,9 @@
 
 本章节将会讲述 `axios` 对象创建的详细过程
 
-## 源码
+## 源码分析
 
-我们先来看一下源码，源码是在`lib/axios.js`文件
+我们先来分析一下源码，源码是在`lib/axios.js`文件
 
 ```javascript
 var utils = require('./utils');
@@ -170,3 +170,4 @@ const axios = createInstance();
 
 - `axios`对象实际上就是`Axios.prototype.request`函数，只是添加一系列属性和方法在这个函数上面
 
+在本章中，我们看见`Axios`构造函数，在下一个章节中，我们将会分析`Axios`构造函数的内部组成
