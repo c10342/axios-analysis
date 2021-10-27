@@ -73,5 +73,5 @@ module.exports.default = axios;
 /**
  * 注意：
  * 
- * 因为在循环`context`实例上面的属性和方法的时候，是无法循环`context`实例所指向的`prototype`原型链上面的属性和方法，所以`utils.extend(instance, Axios.prototype, context)`和`utils.extend(instance, context)`会分别循坏挂在`Axios.prototype`和`context`的属性和方法
+ * 因为在循环`context`实例上面的属性和方法的时候，是无法循环`context`实例所指向的`prototype`原型链上面的属性和方法，只能遍历对象本身上面的属性和方法，所以`utils.extend(instance, Axios.prototype, context)`和`utils.extend(instance, context)`会分别循坏挂在`Axios.prototype`和`context`的属性和方法
  */

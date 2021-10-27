@@ -1,15 +1,107 @@
-"use strict";
+# 请求/响应拦截器的实现
 
-var utils = require("./../utils");
-var buildURL = require("../helpers/buildURL");
+通过上一章节`request`函数的分析，我们发现`request`函数内部使用了`请求/响应拦截器`。那么，本章节，我们就来分析`请求/响应拦截器`是怎么实现的
+
+## 使用
+
+首先，我们来看一下`请求/响应拦截器`是怎么使用的
+
+```javascript
+axios.interceptors.request.use(
+  (config) => {
+    // 在发送http请求之前做些什么
+    // 必须返回config对象
+    // 或者返回一个promise对象，该promise对象resolve的参数必须是config对象，
+    // 否则下一个请求拦截器无法获取config对象
+    return config;
+  },
+  (error) => {
+    // 对请求错误做些什么
+    return Promise.reject(error);
+  }
+);
+
+// 添加响应拦截器
+axios.interceptors.response.use(
+  (response) => {
+    // 对响应数据做点什么
+    // 必须返回response对象
+    // 或者返回一个promise对象，该promise对象resolve的参数必须是response对象，
+    // 否则下一个响应拦截器无法获取response对象
+    return response;
+  },
+  (error) => {
+    // 对响应错误做点什么
+    return Promise.reject(error);
+  }
+);
+```
+
+
+## 源码分析
+
+我们先来分析一下源码，拦截器实现类的源码是在`lib/core/InterceptorManager.js`文件
+
+```javascript
+var utils = require('./../utils');
+
+// 拦截器造函数
+function InterceptorManager() {
+  // 存放拦截器方法，数组内每一项都是有两个属性的对象，两个属性分别对应成功和失败后执行的函数
+  this.handlers = [];
+}
+
+/**
+ * 往拦截器里添加拦截方法
+ *
+ * @param {Function} fulfilled 成功回调函数
+ * @param {Function} rejected 失败回调函数
+ *
+ * @return {Number} 返回拦截器ID
+ */
+InterceptorManager.prototype.use = function use(fulfilled, rejected) {
+  this.handlers.push({
+    fulfilled: fulfilled,
+    rejected: rejected
+  });
+  return this.handlers.length - 1;
+};
+
+/**
+ * 根据ID注销指定的拦截器
+ *
+ * @param {Number} id 截器ID
+ */
+InterceptorManager.prototype.eject = function eject(id) {
+  if (this.handlers[id]) {
+    // 直接把拦截器置位null
+    this.handlers[id] = null;
+  }
+};
+
+
+// 遍历this.handlers，并将this.handlers里的每一项作为参数传给fn执行
+InterceptorManager.prototype.forEach = function forEach(fn) {
+  utils.forEach(this.handlers, function forEachHandler(h) {
+    if (h !== null) {
+      fn(h);
+    }
+  });
+};
+
+module.exports = InterceptorManager;
+
+```
+
+使用拦截器的源码是在`lib/core/Axios.js`文件
+
+```javascript
 var InterceptorManager = require("./InterceptorManager");
 var dispatchRequest = require("./dispatchRequest");
-var mergeConfig = require("./mergeConfig");
 
 // Axios构造器
 function Axios(instanceConfig) {
-  // 默认配置
-  this.defaults = instanceConfig;
+  // ...
   // 请求拦截器/响应拦截器
   this.interceptors = {
     request: new InterceptorManager(),
@@ -19,28 +111,7 @@ function Axios(instanceConfig) {
 
 // request请求函数
 Axios.prototype.request = function request(config) {
-  if (typeof config === "string") {
-    // 使用形式一：axios('example/url'[, config])
-    // 如果config是一个字符串，说明是一个url地址，需要进行处理
-    config = arguments[1] || {};
-    config.url = arguments[0];
-  } else {
-    // 使用形式二：axios(config)
-    config = config || {};
-  }
-
-  // 将默认的配置跟传入的配置进行合并
-  config = mergeConfig(this.defaults, config);
-
-  // 将method统一转化为小写
-  if (config.method) {
-    config.method = config.method.toLowerCase();
-  } else if (this.defaults.method) {
-    // 这个判定条件好像是多余的，因为如果this.defaults.method存在值，那么通过mergeConfig之后config也一定会存在值
-    config.method = this.defaults.method.toLowerCase();
-  } else {
-    config.method = "get";
-  }
+  // ...
 
   // promise调用链（chain数组），dispatchRequest是负责派发请求的
   // dispatchRequest函数暂时不用关心这个函数的实现，只需要知道他返回的是一个promise即可
@@ -94,43 +165,24 @@ Axios.prototype.request = function request(config) {
   return promise;
 };
 
-Axios.prototype.getUri = function getUri(config) {
-  config = mergeConfig(this.defaults, config);
-  return buildURL(config.url, config.params, config.paramsSerializer).replace(
-    /^\?/,
-    ""
-  );
-};
-
-// 添加请求方法别名
-utils.forEach(
-  ["delete", "get", "head", "options"],
-  function forEachMethodNoData(method) {
-    Axios.prototype[method] = function (url, config) {
-      // 实际上是调用了`request`函数
-      return this.request(
-        mergeConfig(config || {}, {
-          method: method,
-          url: url,
-          data: (config || {}).data,
-        })
-      );
-    };
-  }
-);
-
-// 添加请求方法别名
-utils.forEach(["post", "put", "patch"], function forEachMethodWithData(method) {
-  Axios.prototype[method] = function (url, data, config) {
-    // 实际上是调用了`request`函数
-    return this.request(
-      mergeConfig(config || {}, {
-        method: method,
-        url: url,
-        data: data,
-      })
-    );
-  };
-});
-
 module.exports = Axios;
+
+```
+
+## InterceptorManager构造函数分析
+
+从上面的源码分析中，我们可以了解到`InterceptorManager`这个构造函数其实是非常简单的。它是由一个`handlers`属性和三个方法组成的
+
+- `handlers`是一个数组，用来存放拦截器的。数组的每一项都是一个对象，对象必须包含`fulfilled`和`rejected`字段。其中`fulfilled`字段是成功回调函数，必须填写（其实不填也没关系，因为使用promise链式调用，promise会自动跳过，但是这样子没有任何意义）；`rejected`字段是失败回调函数，选填
+
+- `use`函数。往`handlers`数组中添加拦截器。该函数接收2个参数，第一个参数是`fulfilled`成功回调函数，必填。第二个参数是`rejected`失败回调函数，选填。函数返回拦截器在`handlers`数组的索引下标
+
+- `eject`函数。根据`use`函数返回的数组索引下表（即id），置空拦截器（并没有删除该数组项，只是把它变成`null`了）。这个方法实际应用中用的很少
+
+- `forEach`函数。用来循环`handlers`数组，并将`handlers`数组里的每一项作为参数传给fn执行
+
+
+## 拦截器的执行过程
+
+
+

@@ -133,11 +133,33 @@ module.exports = function xhrAdapter(config) {
       request = null;
     };
 
-    // Add xsrf header
-    // This is only done if running in a standard browser environment.
-    // Specifically not if we're in a web worker, or react-native.
+
+    /**
+     * CSRF跨站点请求伪造
+     * CSRF攻击攻击原理及过程如下
+     * 1、用户打开浏览器，访问网站A，并输入了用户名和密码进行了登录
+     * 2、用户登录成功之后，网站A会把cookie信息返回给浏览器，此时浏览器会保存cookie
+     * 3、用户在没有退出登录网站A之前，在同一浏览器中，新开了一个TAB页访问网站B
+     * 4、网站B接收到用户请求之后，返回一些攻击性的代码，并发出一个请求要访问网站A
+     * 5、浏览器在接收到这些攻击性代码之后，会根据网站B的请求，在用户不知情的情况下携带cookie信息，向网站A发出请求。
+     * 6、网站A并不知道这个请求是由网站B发起的。所以会接收并处理这条请求，导致来自网站B的恶意代码被执行了
+     * 
+     * 解决方案：
+     * 1、验证 HTTP Referer 字段。该字段记录了http请求的来源地址，但是Referer字段是由浏览器提供的，每个浏览器对于Referer字段的实现可能会有所差异。而且Referer字段是可以被篡改的
+     * 2、在 HTTP 请求头中自定义属性并验证。比如添加token并验证。我们可以在请求头中添加token信息，后端通过验证这个token信息，来判断是否为csrf攻击。axios就是基于这种方式去做csrf防御的
+     */
+    // 防止 xsrf
+    // 需要在标准浏览器中才能使用，如果是在react-native中就不能使用了
     if (utils.isStandardBrowserEnv()) {
-      // Add xsrf header
+      // 默认值
+      // {
+      //   xsrfCookieName: 'XSRF-TOKEN',
+      //   xsrfHeaderName: 'X-XSRF-TOKEN',
+      // }
+      // 这段代码的逻辑很简单。如果 cookie 中包含 XSRF-TOKEN 这个字段，就把 header 中 X-XSRF-TOKEN 字段的值设为 XSRF-TOKEN 对应的值
+
+      // `withCredentials`配置参数为`true`并且是同源请求
+      // isURLSameOrigin涉及到一些知识点，需要重点分析
       var xsrfValue =
         (config.withCredentials || isURLSameOrigin(fullPath)) &&
         config.xsrfCookieName
@@ -145,6 +167,7 @@ module.exports = function xhrAdapter(config) {
           : undefined;
 
       if (xsrfValue) {
+        // 设置请求头
         requestHeaders[config.xsrfHeaderName] = xsrfValue;
       }
     }
