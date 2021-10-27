@@ -37,11 +37,11 @@ module.exports = {
     ],
     displayAllHeaders: true,
     sidebar: [
-      '/analysis/prepare',
-      '/analysis/instance-create',
-      '/analysis/axios-form',
-      '/analysis/buildURL',
-      '/analysis/request',
+      '/analysis/01prepare',
+      '/analysis/02instance-create',
+      '/analysis/03axios-form',
+      '/analysis/04buildURL',
+      '/analysis/05request',
     ]
   }
 };
