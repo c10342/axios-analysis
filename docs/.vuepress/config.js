@@ -1,6 +1,3 @@
-const path = require("path");
-const fs = require("fs");
-
 
 module.exports = {
   title: "axios源码深入解读",
@@ -25,7 +22,7 @@ module.exports = {
     editLinkText: "帮助我们改善此页面！",
     nav: [
       { text: "首页", link: "/" },
-      { text: "源码分析", link: "/analysis/prepare" },
+      { text: "源码分析", link: "/analysis/01-prepare" },
       {
         text: "其他",
         items: [
@@ -37,11 +34,11 @@ module.exports = {
     ],
     displayAllHeaders: true,
     sidebar: [
-      '/analysis/01prepare',
-      '/analysis/02instance-create',
-      '/analysis/03axios-form',
-      '/analysis/04buildURL',
-      '/analysis/05request',
+      '/analysis/01-prepare',
+      '/analysis/02-instance-create',
+      '/analysis/03-axios-form',
+      '/analysis/04-buildURL',
+      '/analysis/05-request',
     ]
   }
 };

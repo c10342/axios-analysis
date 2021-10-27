@@ -1,6 +1,6 @@
 # request 函数分析
 
-在前面的章节[Axios 构造函数分析](/analysis/axios-form)中，我们发现，`post`，`get`等请求函数别名，内部都是执行`request`函数的。而且，在[axios 对象创建过程](/analysis/instance-create)章节中，我们也知道了`axios`对象实际上是通过`Axios.prototype.request`函数构建出来的。那么，本章节我们就来分析一下这个`request`函数
+在前面的章节[Axios 构造函数分析](/analysis/01-axios-form)中，我们发现，`post`，`get`等请求函数别名，内部都是执行`request`函数的。而且，在[axios 对象创建过程](/analysis/01-instance-create)章节中，我们也知道了`axios`对象实际上是通过`Axios.prototype.request`函数构建出来的。那么，本章节我们就来分析一下这个`request`函数
 
 ## 源码分析
 

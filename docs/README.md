@@ -3,7 +3,7 @@ home: true
 heroText: 逐行剖析 axios 源码
 tagline: 十大章节，逐个击破
 actionText: 开始学习 →
-actionLink: /analysis/prepare
+actionLink: /analysis/01-prepare
 footer: MIT Licensed | Copyright © 2021-present
 ---
 
