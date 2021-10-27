@@ -1,5 +1,13 @@
-'use strict';
+# buildURL函数分析
 
+通过上一章节的学习，我们了解到了`Axios`构造函数有一个`getUri`函数，该函数内部使用了`buildURL`这个函数。本章节，我们将会来分析这个`buildURL`函数
+
+
+## 源码分析
+
+我们先来分析一下源码，源码是在`lib/helpers/buildURL.js`文件
+
+```javascript
 var utils = require('./../utils');
 
 // 编码
@@ -43,7 +51,8 @@ module.exports = function buildURL(url, params, paramsSerializer) {
     // 可参考 https://developer.mozilla.org/zh-CN/docs/Web/API/URLSearchParams
     serializedParams = params.toString();
   } else {
-    // url查询参数数组，最终存储的是这种形式：`['name=张三','age=10','hobby[]=学习','hobby[]=睡觉']`
+    // url查询参数数组，最终存储的是这种形式：
+    // `['name=张三','age=10','hobby[]=学习','hobby[]=睡觉']`
     var parts = [];
     // 遍历params参数
     utils.forEach(params, function serialize(val, key) {
@@ -95,26 +104,36 @@ module.exports = function buildURL(url, params, paramsSerializer) {
 
   return url;
 };
+```
 
+## 重点逻辑
 
-/**
- * 总结：
- * 
- * 重点关注 `else`部分的内容，涉及到一些参数序列化的知识
- * 
- * 参数序列化关键点：
- * 1、值为null或者undefined的不需要进行序列化
- * 2、参数类型为`URLSearchParams`的直接使用`toString`方法进行序列化
- * 3、值为数组的参数，查询参数的key值需要添加`[]`标识为一个数组
- * 4、值为`Date`类型的需要使用`toISOString`转化为字符串
- * 5、值是对象的情况下，使用JSON.stringify转化为字符串
- * 6、其余情况，直接对key，val进行拼接即可
- */
+我们重点关心`else`部分的内容，因为涉及到一些参数序列化的知识
 
-/**
- * 设计的巧妙之处：
- * 
- * 1、首先是`var parts = []`，存储的是每一部分的参数（eg：`['name=张三','age=10','hobby[]=学习','hobby[]=睡觉']`），最终通过`parts.join('&')`拼接成完整的字符串。减少了字符串拼接的繁琐工作
- * 
- * 2、在处理 key-val 拼接的时候，考虑到会存在数组的参数，所以在遍历参数的时候，将所有val统一转化为数组进行处理，然后在对val数组进行遍历拼接。统一了处理的方式，这样子就可以不用通过if-else分别对数组和非数组进行分别处理。
- */
+参数序列化关键点如下:
+
+- 值为null或者undefined的不需要进行序列化
+
+- 参数类型为`URLSearchParams`的直接使用`toString`方法进行序列化
+
+- 值为数组的参数，查询参数的key值需要添加`[]`标识为一个数组
+
+- 值为`Date`类型的需要使用`toISOString`转化为字符串
+
+- 值是对象的情况下，使用JSON.stringify转化为字符串
+
+- 其余情况，直接对key，val进行拼接即可
+
+## 设计的巧妙之处
+
+在这部分，我认为有2点的设计是比较巧妙的。
+
+1、首先是`var parts = []`，存储的是每一部分的参数（eg：`['name=张三','age=10','hobby[]=学习','hobby[]=睡觉']`），最终通过`parts.join('&')`拼接成完整的字符串。减少了字符串拼接的繁琐工作
+
+2、在处理 key-val 拼接的时候，考虑到会存在数组的参数，所以在遍历参数的时候，将所有val统一转化为数组进行处理，然后在对val数组进行遍历拼接。统一了处理的方式，这样子就可以不用通过if-else分别对数组和非数组进行分别处理。
+
+## 总结
+
+`buildURL`函数的代码行数虽然不是很多，但是里面涉及的知识点和设计思路却是非常值得我们学习的。相信通过本章节的学习，你对参数序列化已经有了一定的了解，并且对于一些字符串的拼接（比如拼接样式字符串）应该也有了一些新的思路。
+
+在下一个章节，我将带领大家分析`Axios.prototype.request`函数内部的执行流程

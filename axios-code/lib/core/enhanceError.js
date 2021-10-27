@@ -1,13 +1,13 @@
 'use strict';
 
 /**
- * Update an Error with the specified config, error code, and response.
+ * 给error对象添加额外的属性.
  *
- * @param {Error} error The error to update.
- * @param {Object} config The config.
- * @param {string} [code] The error code (for example, 'ECONNABORTED').
- * @param {Object} [request] The request.
- * @param {Object} [response] The response.
+ * @param {Error} error error对象
+ * @param {Object} config 请求配置项
+ * @param {string} [code] 错误码
+ * @param {Object} [request] 请求对象
+ * @param {Object} [response] 响应对象
  * @returns {Error} The error.
  */
 module.exports = function enhanceError(error, config, code, request, response) {
@@ -35,8 +35,7 @@ module.exports = function enhanceError(error, config, code, request, response) {
       stack: this.stack,
       // Axios
       config: this.config,
-      code: this.code,
-      status: this.response && this.response.status ? this.response.status : null
+      code: this.code
     };
   };
   return error;

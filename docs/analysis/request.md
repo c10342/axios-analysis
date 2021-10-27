@@ -1,22 +1,12 @@
-"use strict";
+# request 函数分析
 
-var utils = require("./../utils");
-var buildURL = require("../helpers/buildURL");
-var InterceptorManager = require("./InterceptorManager");
-var dispatchRequest = require("./dispatchRequest");
-var mergeConfig = require("./mergeConfig");
+在前面的章节[Axios 构造函数分析](/analysis/axios-form)中，我们发现，`post`，`get`等请求函数别名，内部都是执行`request`函数的。而且，在[axios 对象创建过程](/analysis/instance-create)章节中，我们也知道了`axios`对象实际上是通过`Axios.prototype.request`函数构建出来的。那么，本章节我们就来分析一下这个`request`函数
 
-// Axios构造器
-function Axios(instanceConfig) {
-  // 默认配置
-  this.defaults = instanceConfig;
-  // 请求拦截器/响应拦截器
-  this.interceptors = {
-    request: new InterceptorManager(),
-    response: new InterceptorManager(),
-  };
-}
+## 源码分析
 
+我们先来分析一下源码，源码是在`lib/core/Axios.js`文件
+
+```javascript
 // request请求函数
 Axios.prototype.request = function request(config) {
   if (typeof config === "string") {
@@ -76,44 +66,30 @@ Axios.prototype.request = function request(config) {
 
   return promise;
 };
+```
 
-Axios.prototype.getUri = function getUri(config) {
-  config = mergeConfig(this.defaults, config);
-  return buildURL(config.url, config.params, config.paramsSerializer).replace(
-    /^\?/,
-    ""
-  );
-};
+## 执行流程
 
-// 添加请求方法别名
-utils.forEach(
-  ["delete", "get", "head", "options"],
-  function forEachMethodNoData(method) {
-    Axios.prototype[method] = function(url, config) {
-      // 实际上是调用了`request`函数
-      return this.request(
-        mergeConfig(config || {}, {
-          method: method,
-          url: url,
-          data: (config || {}).data,
-        })
-      );
-    };
-  }
-);
+1、对`config`参数进行处理，因为`request`函数支持多种调用形式：`axios('example/url'[, config])`，`axios(config)`
 
-// 添加请求方法别名
-utils.forEach(["post", "put", "patch"], function forEachMethodWithData(method) {
-  Axios.prototype[method] = function(url, data, config) {
-    // 实际上是调用了`request`函数
-    return this.request(
-      mergeConfig(config || {}, {
-        method: method,
-        url: url,
-        data: data,
-      })
-    );
-  };
-});
+2、将默认选项配置和传入的选项配置进行合并，形成一个新的配置
 
-module.exports = Axios;
+3、判断`method`请求方法是否存在，不存在则默认是`get`。将`method`请求方法转化为小写
+
+4、初始化一个`promise`调用链（数组）
+
+5、通过`Promise.resolve(config)`初始化一个`promise`实例
+
+6、遍历请求拦截器，将请求拦截器放置到`promise`调用链的前面
+
+7、遍历响应拦截器，将响应拦截器放置到`promise`调用链的后面
+
+8、循环`promise`调用链，将`promise`调用链中的每一个项通过`promise = promise.then(xx,xx)`串联起来，然后开始执行
+
+9、返回`promise`实例
+
+## 总结
+
+通过上面的分析，我们了解到了`request`函数内部的执行流程。相信大家通过分析，已经发现了`request`函数存在2个重点。一个是请求/响应拦截器的实现（在实际开发中经常使用到），需要重点去分析。一个是`dispatchRequest`函数，是用来派发请求的，请求/响应数据的处理都是在这个函数里面的，也是需要重点分析的
+
+在下一个章节，我们将会讲解请求/响应拦截器的实现

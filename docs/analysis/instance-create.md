@@ -20,23 +20,17 @@ function createInstance(defaultConfig) {
 
   // 通过`new`得到一个`Axios`实例，但是最终return的并不是这个实例
   var context = new Axios(defaultConfig);
-
+  
   // 获取`Axios`原型链上面的`request`方法，并将其this绑定为context
   // 这里实际上可以写成`Axios.prototype.request.bind(context)`
   var instance = bind(Axios.prototype.request, context);
 
-  // 遍历`Axios.prototype`原型上面的属性和方法，然后挂载到`instance`上面。
-  // 如果是方法就需要将`this`绑定为`context`
+  // 遍历`Axios.prototype`原型上面的属性和方法，然后挂载到`instance`上面。如果是方法就需要将`this`绑定为`context`
   utils.extend(instance, Axios.prototype, context);
 
   // 循坏`context`实例上面的属性，并挂载到`instance`上面
   // 实际`context`实例上面就只有`defaults`和`interceptors`2个属性
   utils.extend(instance, context);
-
-  // 挂载`create`方法，用来创建新的axios对象
-  instance.create = function create(instanceConfig) {
-    return createInstance(mergeConfig(defaultConfig, instanceConfig));
-  };
 
   return instance;
 }
@@ -47,21 +41,21 @@ var axios = createInstance(defaults);
 // 挂载`Axios`类
 axios.Axios = Axios;
 
+// 挂载`create`方法，用来创建新的axios对象
+axios.create = function create(instanceConfig) {
+  return createInstance(mergeConfig(axios.defaults, instanceConfig));
+};
+
 // 挂载取消请求的相关东西
 axios.Cancel = require('./cancel/Cancel');
 axios.CancelToken = require('./cancel/CancelToken');
 axios.isCancel = require('./cancel/isCancel');
-// 版本号
-axios.VERSION = require('./env/data').version;
 
 // 添加all和spread方法
 axios.all = function all(promises) {
   return Promise.all(promises);
 };
 axios.spread = require('./helpers/spread');
-
-// 添加isAxiosError函数，这个函数是用来判断请求错误时，是否为axios封装过的
-axios.isAxiosError = require('./helpers/isAxiosError');
 
 // 导出axios
 module.exports = axios;
@@ -82,15 +76,13 @@ module.exports.default = axios;
 
 4、将`context`实例上面的属性逐一挂载`instance`函数上面
 
-5、挂载`create`函数到`instance`函数上面
-
-6、调用`createInstance`函数创建一个默认的`axios`对象，并导出
+5、调用`createInstance`函数创建一个默认的`axios`对象，并导出
 
 ## 其他
 
 现在我们把注意力集中在 `var axios = createInstance(defaults);` 这行代码后面的代码当中。
 
-我们可以发现，`Axios`，`Cancel`，`CancelToken`，`isCancel`，`VERSION`，`all`，`spread`，`isAxiosError`这些类，函数，属性只有在默认导出的`axios`对象上面才存在的，通过`axios.create`创建的对象上面是不存在的。所以我们在使用这些函数或者属性的时候，要特别注意我们当前使用的是默认导出的对象还是使用`axios.create`创建的对象
+我们可以发现，`Axios`，`Cancel`，`CancelToken`，`isCancel`，`create`，`all`，`spread`这些类，函数，属性只有在默认导出的`axios`对象上面才存在的，通过`axios.create`创建的对象上面是不存在的。所以我们在使用这些函数或者属性的时候，要特别注意我们当前使用的是默认导出的对象还是使用`axios.create`创建的对象
 
 ## 注意点
 
@@ -159,7 +151,7 @@ function createInstance(config) {
   return instance;
 }
 
-const axios = createInstance();
+const axios = createInstance(defaults);
 ```
 
 ## 总结

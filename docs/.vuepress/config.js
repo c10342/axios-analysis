@@ -40,6 +40,8 @@ module.exports = {
       '/analysis/prepare',
       '/analysis/instance-create',
       '/analysis/axios-form',
+      '/analysis/buildURL',
+      '/analysis/request',
     ]
   }
 };

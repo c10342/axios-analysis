@@ -4,16 +4,18 @@ var isAbsoluteURL = require('../helpers/isAbsoluteURL');
 var combineURLs = require('../helpers/combineURLs');
 
 /**
- * Creates a new URL by combining the baseURL with the requestedURL,
- * only when the requestedURL is not already an absolute URL.
- * If the requestURL is absolute, this function returns the requestedURL untouched.
+ * 通过组合baseURL和RequesteURL来创建新URL，
+ * 只有当`requestedURL`不是绝对地址的时候，才会将`baseURL`和`requestedURL`进行合并。
  *
- * @param {string} baseURL The base URL
- * @param {string} requestedURL Absolute or relative URL to combine
- * @returns {string} The combined full path
+ * @param {string} baseURL 前缀地址
+ * @param {string} requestedURL 相对地址或者是绝对地址
+ * @returns {string} 处理后的url地址
  */
 module.exports = function buildFullPath(baseURL, requestedURL) {
+  // baseURL存在并且requestedURL是一个相对地址，才会将`baseURL`和`requestedURL`进行合并
+  // 一般来说，以http开头或者https开头的都是绝对地址
   if (baseURL && !isAbsoluteURL(requestedURL)) {
+    // 拼接`baseURL`和`requestedURL`成为一个完整的url地址
     return combineURLs(baseURL, requestedURL);
   }
   return requestedURL;
