@@ -1,5 +1,6 @@
 ---
 home: true
+heroImage: /images/logo.png
 heroText: 逐行剖析 axios 源码
 tagline: 十四个章节，逐个击破
 actionText: 开始学习 →
