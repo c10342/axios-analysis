@@ -1,4 +1,4 @@
-# buildURL函数分析
+# buildURL 函数分析
 
 通过上一章节的学习，我们了解到了`Axios`构造函数有一个`getUri`函数，该函数内部使用了`buildURL`这个函数。本章节，我们将会来分析这个`buildURL`函数
 

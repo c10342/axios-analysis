@@ -39,6 +39,15 @@ module.exports = {
       '/analysis/03-axios-form',
       '/analysis/04-buildURL',
       '/analysis/05-request',
+      '/analysis/06-interceptors',
+      '/analysis/07-dispatchRequest',
+      '/analysis/08-transformData',
+      '/analysis/09-xhr',
+      '/analysis/10-authentication',
+      '/analysis/11-XSRF',
+      '/analysis/12-isURLSameOrigin',
+      '/analysis/13-cancel-request',
+      '/analysis/14-http'
     ]
   }
 };

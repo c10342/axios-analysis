@@ -1,9 +1,9 @@
-'use strict';
+"use strict";
 
-var utils = require('./../utils');
-var transformData = require('./transformData');
-var isCancel = require('../cancel/isCancel');
-var defaults = require('../defaults');
+var utils = require("./../utils");
+var transformData = require("./transformData");
+var isCancel = require("../cancel/isCancel");
+var defaults = require("../defaults");
 
 /**
  * 判断请求是否已经被取消了，已经被取消的请求，再次发送请求是没有意义的
@@ -30,8 +30,12 @@ module.exports = function dispatchRequest(config) {
   // 确保headers是存在的
   config.headers = config.headers || {};
 
-  // 转换请求参数。`transformData`函数的作用就是调用`config.transformRequest`数组（数组的每一项都是一个函数）对请求参数进行转化
-  // `config.transformRequest`这个数组的函数需要重点分析
+  // 转换请求数据。
+  // `transformData`函数的作用就是循环`config.transformRequest`数组
+  // 如果`config.transformRequest`是一个函数会先转化为数组函数
+  // 然后调用数组中的每一个函数对请求数据进行转换
+  // 上一个函数的处理结果会作为下一个函数的参数
+  // `config.transformRequest`需要重点分析
   config.data = transformData(
     config.data,
     config.headers,
@@ -80,7 +84,7 @@ module.exports = function dispatchRequest(config) {
   //   }
   // }
   utils.forEach(
-    ['delete', 'get', 'head', 'post', 'put', 'patch', 'common'],
+    ["delete", "get", "head", "post", "put", "patch", "common"],
     function cleanHeaderConfig(method) {
       delete config.headers[method];
     }
@@ -92,39 +96,45 @@ module.exports = function dispatchRequest(config) {
   var adapter = config.adapter || defaults.adapter;
 
   // 发起请求
-  return adapter(config).then(function onAdapterResolution(response) {
-    // 再次检查请求是否被取消了
-    throwIfCancellationRequested(config);
-
-    // 对响应数据进行处理
-    // `transformData`函数的作用就是调用`config.transformResponse`数组（数组的每一项都是一个函数）对请求参数进行转化
-  // `config.transformResponse`这个数组的函数需要重点分析
-    response.data = transformData(
-      response.data,
-      response.headers,
-      config.transformResponse
-    );
-
-    return response;
-  }, function onAdapterRejection(reason) {
-    // 请求出错，就会来到这个函数
-    if (!isCancel(reason)) {
-      // 请求没有被取消
-
+  return adapter(config).then(
+    function onAdapterResolution(response) {
+      // 再次检查请求是否被取消了
       throwIfCancellationRequested(config);
 
-      // 对响应数据进行处理，跟上面第101行的方式一样
-      if (reason && reason.response) {
-        reason.response.data = transformData(
-          reason.response.data,
-          reason.response.headers,
-          config.transformResponse
-        );
-      }
-    }
+      // 转换响应数据
+      // `transformData`函数的作用就是循环`config.transformResponse`数组函数
+      // 如果`config.transformResponse`是一个函数会先转化为数组函数
+      // 然后调用数组中的每一个函数对响应数据进行转换
+      // 上一个函数的处理结果会作为下一个函数的参数
+      // `config.transformResponse`需要重点分析
+      response.data = transformData(
+        response.data,
+        response.headers,
+        config.transformResponse
+      );
 
-    return Promise.reject(reason);
-  });
+      return response;
+    },
+    function onAdapterRejection(reason) {
+      // 请求出错，就会来到这个函数
+      if (!isCancel(reason)) {
+        // 请求没有被取消
+
+        throwIfCancellationRequested(config);
+
+        // 对响应数据进行处理，跟上面第108行的方式一样
+        if (reason && reason.response) {
+          reason.response.data = transformData(
+            reason.response.data,
+            reason.response.headers,
+            config.transformResponse
+          );
+        }
+      }
+
+      return Promise.reject(reason);
+    }
+  );
 };
 
 /**

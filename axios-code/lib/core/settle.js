@@ -3,7 +3,7 @@
 var createError = require('./createError');
 
 /**
- * Resolve or reject a Promise based on response status.
+ * 根据响应状态码，调用resolve或者reject
  *
  * @param {Function} resolve A function that resolves the promise.
  * @param {Function} reject A function that rejects the promise.

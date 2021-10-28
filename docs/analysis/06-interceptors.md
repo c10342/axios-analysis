@@ -37,13 +37,12 @@ axios.interceptors.response.use(
 );
 ```
 
-
 ## 源码分析
 
 我们先来分析一下源码，拦截器实现类的源码是在`lib/core/InterceptorManager.js`文件
 
 ```javascript
-var utils = require('./../utils');
+var utils = require("./../utils");
 
 // 拦截器造函数
 function InterceptorManager() {
@@ -62,7 +61,7 @@ function InterceptorManager() {
 InterceptorManager.prototype.use = function use(fulfilled, rejected) {
   this.handlers.push({
     fulfilled: fulfilled,
-    rejected: rejected
+    rejected: rejected,
   });
   return this.handlers.length - 1;
 };
@@ -79,7 +78,6 @@ InterceptorManager.prototype.eject = function eject(id) {
   }
 };
 
-
 // 遍历this.handlers，并将this.handlers里的每一项作为参数传给fn执行
 InterceptorManager.prototype.forEach = function forEach(fn) {
   utils.forEach(this.handlers, function forEachHandler(h) {
@@ -90,7 +88,6 @@ InterceptorManager.prototype.forEach = function forEach(fn) {
 };
 
 module.exports = InterceptorManager;
-
 ```
 
 使用拦截器的源码是在`lib/core/Axios.js`文件
@@ -166,23 +163,120 @@ Axios.prototype.request = function request(config) {
 };
 
 module.exports = Axios;
-
 ```
 
-## InterceptorManager构造函数分析
+## InterceptorManager 构造函数分析
 
 从上面的源码分析中，我们可以了解到`InterceptorManager`这个构造函数其实是非常简单的。它是由一个`handlers`属性和三个方法组成的
 
-- `handlers`是一个数组，用来存放拦截器的。数组的每一项都是一个对象，对象必须包含`fulfilled`和`rejected`字段。其中`fulfilled`字段是成功回调函数，必须填写（其实不填也没关系，因为使用promise链式调用，promise会自动跳过，但是这样子没有任何意义）；`rejected`字段是失败回调函数，选填
+- `handlers`是一个数组，用来存放拦截器的。数组的每一项都是一个对象，对象必须包含`fulfilled`和`rejected`字段。其中`fulfilled`字段是成功回调函数，必须填写（其实不填也没关系，因为使用 promise 链式调用，promise 会自动跳过，但是这样子没有任何意义）；`rejected`字段是失败回调函数，选填
 
-- `use`函数。往`handlers`数组中添加拦截器。该函数接收2个参数，第一个参数是`fulfilled`成功回调函数，必填。第二个参数是`rejected`失败回调函数，选填。函数返回拦截器在`handlers`数组的索引下标
+- `use`函数。往`handlers`数组中添加拦截器。该函数接收 2 个参数，第一个参数是`fulfilled`成功回调函数，必填。第二个参数是`rejected`失败回调函数，选填。函数返回拦截器在`handlers`数组的索引下标
 
-- `eject`函数。根据`use`函数返回的数组索引下表（即id），置空拦截器（并没有删除该数组项，只是把它变成`null`了）。这个方法实际应用中用的很少
+- `eject`函数。根据`use`函数返回的数组索引下表（即 id），置空拦截器（并没有删除该数组项，只是把它变成`null`了）。这个方法实际应用中用的很少
 
-- `forEach`函数。用来循环`handlers`数组，并将`handlers`数组里的每一项作为参数传给fn执行
-
+- `forEach`函数。用来循环`handlers`数组，并将`handlers`数组里的每一项作为参数传给 fn 执行
 
 ## 拦截器的执行过程
 
+执行过程：`请求拦截器-->请求处理函数-->响应拦截器`
+
+`promise链式调用`是指可以使用多次`then`连接起来，上一个`then`返回的结果将会作为下一个`then`的参数。代码示例如下：
+
+```javascript
+const promise = new Promise((resolve) => resolve({ name: "张三" }));
+
+promise
+  .then((config) => {
+    console.log(config); // {name:'张三'}
+    config.age = 11;
+    return config;
+  })
+  .then((config) => {
+    console.log(config); // {name:'张三',age:11}
+    config.sex = "男";
+    return config;
+  })
+  .then((config) => {
+    console.log(config); // {name:'张三',age:11,sex:'男'}
+    return config;
+  });
+```
+
+通过上面的代码示例，相信大家应该对`promise链式调用`有了一定的了解了，那么，我们现在来看看拦截器的执行过程
+
+1、初始化一个`chain数组`，并将请求处理函数放到数组中。数组中每 2 项作为一对，即`第 n 项`是`fulfilled`成功回调函数，`第 n+1 项`是`rejected`失败回调函数。所以我们可以看见`chain数组`的初始化状态为`[dispatchRequest, undefined]`，一个成功回调函数，一个失败回调函数，即使函数不存在也要给一个`undefined`，保证是成对出现的
+
+```javascript
+var chain = [dispatchRequest, undefined];
+```
+
+2、使用`Promise.resolve`初始化一个 promise 实例，并将 config 配置项作为参数
+
+```javascript
+var promise = Promise.resolve(config);
+```
+
+3、遍历`请求拦截器`，通过`unshift`方法将`请求拦截器`的`fulfilled`成功回调函数和`rejected`失败回调函数，放置到数组前面
+
+```javascript
+chain.unshift(interceptor.fulfilled, interceptor.rejected);
+```
+
+4、遍历`响应拦截器`，通过`push`方法将`响应拦截器`的`fulfilled`成功回调函数和`rejected`失败回调函数，放置到数组后面
+
+```javascript
+chain.push(interceptor.fulfilled, interceptor.rejected);
+```
+
+5、`请求拦截器`和`响应拦截器`添加进`chain数组`之后，`chain数组`结构如下：
+
+```javascript
+  [
+    requestFulfilledFn, requestRejectedFn, ...,
+    dispatchRequest, undefined,
+    responseFulfilledFn, responseRejectedFn, ....,
+  ]
+```
+
+6、循环`chain数组`，将`chain数组`中的每一项通过`promise.then`串联起来，形成一个调用链。`chain数组`的`第n项`作为`promise.then`的第一个参数，也就是成功回调参数，`chain数组`的`第n+1项`作为`promise.then`的第二个参数，也就是失败回调参数，
+
+```javascript
+while (chain.length) {
+  promise = promise.then(chain.shift(), chain.shift());
+}
+```
+
+7、`promise`实例的最终结构如下：
+
+```javascript
+promise
+  .then(requestFulfilledFn, requestRejectedFn)
+  .then(dispatchRequest, undefined)
+  .then(responseFulfilledFn, responseRejectedFn);
+```
+
+## 思考
+
+我们是否可以使用中间件来实现拦截器呢？类似`express`，`koa2`的中间件模型。这里还有代思考
 
 
+## 总结
+
+经过上面的分析，我们可以得出结论，请求拦截器后面的先执行，响应拦截器前面的先执行。一个请求的整体执行顺序为`请求拦截器-->请求处理函数-->响应拦截器`。其中`请求拦截器`和`响应拦截器`中可以包含异步的操作，因为通过promise可以保证执行的顺序，但是如果是包含了异步的操作，需要自己封装一个promise并返回，代码示例如下：
+
+```javascript
+axios.interceptors.request.use(
+  (config) => {
+    return new Promise(resolve=>{
+      setTimeout(()=>{
+        config.age = 11
+        resolve(config)
+      },3000)
+    })
+  });
+```
+
+在本章中，我们学到`promise`链式调用的用法，这种用法非常巧妙的将`请求拦截器`，`请求处理函数`，`响应拦截器`串联起来，形成一个完整的promise调用链。
+
+在下一个章节中，我们将会分析`dispatchRequest`函数到底是怎么实现的

@@ -3,12 +3,12 @@
 var utils = require('./../utils');
 
 /**
- * 对请求参数参数或者响应结果进行转化处理
+ * 对请求/响应数据进行转化处理
  *
- * @param {Object|String} data The data to be transformed
- * @param {Array} headers The headers for the request or response
- * @param {Array|Function} fns A single function or Array of functions
- * @returns {*} The resulting transformed data
+ * @param {Object|String} data 数据
+ * @param {Array} headers 请求头
+ * @param {Array|Function} fns 数组函数或者函数
+ * @returns {*} 转换之后的数据
  */
 module.exports = function transformData(data, headers, fns) {
   utils.forEach(fns, function transform(fn) {

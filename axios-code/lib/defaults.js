@@ -61,6 +61,8 @@ var defaults = {
       // 序列化参数（将数据变成字符串）
       return data.toString();
     }
+
+    // 自动转换 JSON 数据
     if (utils.isObject(data)) {
       // 参数是对象类型的，或者`Content-Type`请求头值为`application/json`的情况
       // 如果`Content-Type`请求头没有设置，就将`Content-Type`请求头设置为`application/json`
@@ -84,6 +86,7 @@ var defaults = {
     // 将字符串转为对象，如果成功就返回对象，如果失败就原样返回
     if (typeof data === 'string') {
       try {
+        // 自动转换 JSON 数据
         data = JSON.parse(data);
       } catch (e) { /* Ignore */ }
     }

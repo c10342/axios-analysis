@@ -1,0 +1,1 @@
+# isURLSameOrigin 函数分析
