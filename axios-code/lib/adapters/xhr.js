@@ -94,14 +94,15 @@ module.exports = function xhrAdapter(config) {
         request: request,
       };
 
-      // 请求成功或者失败的处理函数
+      // settle函数是根据返回的状态码来判断请求是否成功，
+      // 然后调用resolve/reject
       settle(resolve, reject, response);
 
       // 置空 `request` 对象
       request = null;
     };
 
-    // 监听 `onabort` 事件，即请求取消
+    // 监听 `onabort` 事件，即请求取消事件
     request.onabort = function handleAbort() {
       if (!request) {
         return;
@@ -148,7 +149,7 @@ module.exports = function xhrAdapter(config) {
      * 1、验证 HTTP Referer 字段。该字段记录了http请求的来源地址，但是Referer字段是由浏览器提供的，每个浏览器对于Referer字段的实现可能会有所差异。而且Referer字段是可以被篡改的
      * 2、在 HTTP 请求头中自定义属性并验证。比如添加token并验证。我们可以在请求头中添加token信息，后端通过验证这个token信息，来判断是否为csrf攻击。axios就是基于这种方式去做csrf防御的
      */
-    // 防止 xsrf
+    // 防御 xsrf
     // 需要在标准浏览器中才能使用，如果是在react-native中就不能使用了
     if (utils.isStandardBrowserEnv()) {
       // 默认值

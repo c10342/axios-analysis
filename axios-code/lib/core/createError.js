@@ -3,7 +3,7 @@
 var enhanceError = require('./enhanceError');
 
 /**
- * Create an Error with the specified message, config, error code, request and response.
+ * 给error对象添加一些属性，然后返回
  *
  * @param {string} message The error message.
  * @param {Object} config The config.
