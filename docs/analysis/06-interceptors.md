@@ -258,7 +258,7 @@ promise
 
 ## 思考
 
-我们是否可以使用中间件来实现拦截器呢？类似`express`，`koa2`的中间件模型。下面我们以`koa2`的洋葱模型为例，实现一个自己的拦截器
+我们是否可以使用中间件来实现拦截器呢？类似`express`，`koa2`的中间件模型。下面我们以`koa2`的洋葱模型为例，利用中间件实现一个自己的拦截器
 
 ```javascript
 // 中间件
@@ -274,6 +274,7 @@ class Middleware {
 
   // 执行中间件
   exec(ctx, callback) {
+    // 所有中间件通过ctx对象传递消息
     return new Promise((resolve, reject) => {
       // resolveFn放在第一位，确保所有中间件执行完毕之后才resolve
       const resolveFn = async (ctx, next) => {
@@ -283,9 +284,12 @@ class Middleware {
       // 所有中间件放到一个数组中
       const cbs = [resolveFn, ...this.cbs, callback];
       const dispatch = (index = 0) => {
+      // 从第0个中间件开始执行
         const fn = cbs[index];
+        // next函数被调用之后就会执行下一个中间件
+        const next = () => dispatch(++index)
         // 执行中间件，同时还要捕获错误
-        fn(ctx, () => dispatch(++index)).catch((error) => {
+        fn(ctx, next).catch((error) => {
           reject(error);
         });
       };
@@ -297,40 +301,58 @@ class Middleware {
 class PreQuest extends Middleware {
   constructor(adapter) {
     super();
-    // 适配器
+    // 适配器，请求处理函数
     this.adapter = adapter;
   }
 
   // 调用adapter适配器发送请求
   request(config = {}) {
+    // 构造ctx对象
     const ctx = {
       request: config,
       response: {},
     };
     // 执行中间件
     return this.exec(ctx, async (ctx) => {
+      // 发送请求也做为一个中间件处理
+      // 并且是最后一个中间件
+      // 这样才能保证在所有请求拦截器执行完毕后才执行
+      // 在响应拦截器执行前执行
+      // 因为这是最后一个中间件，所以不需要调用next函数
       ctx.response = await this.adapter(ctx);
     });
   }
 }
 
+// 适配器，处理请求
 function adapter(ctx) {
   return new Promise((resolve) => {
     setTimeout(() => {
-      resolve({ data: { age: 1 } });
+      resolve({ data: { success: true } });
     }, 2000);
   });
 }
 
+// 初始化
 const instance = new PreQuest(adapter);
 
+// 添加中间件
+// 因为是洋葱模型，
+// 所以`await next()`前面的是请求拦截部分
+// 后面是响应拦截部分
+// 第一个中间件
 instance.use(async (ctx, next) => {
-  ctx.request.path = "request";
-  await next();
-  ctx.response.body = "response";
+  // 请求拦截部分
+  ctx.request.name = "张三";
+  await next(); // next函数被调用了，就回去执行下一个中间件
+  // 响应拦截部分
+  ctx.response.sex = "男";
 });
+// 第二个中间件
 instance.use(async (ctx, next) => {
+  ctx.request.age = "11";
   await next();
+  ctx.response.bobby = ['睡觉','学习'];
 });
 
 instance
@@ -342,6 +364,42 @@ instance
     console.log(error);
   });
 ```
+
+我们通过一张图片来查看上面代码的执行流程：
+
+![请求/响应洋葱模型](/images/model.png)
+
+我们将图片和代码相结合。可以看出
+
+图片中第一个中间件是指
+
+```javascript
+instance.use(async (ctx, next) => {
+  ctx.request.name = "张三";
+  await next();
+  ctx.response.sex = "男";
+});
+```
+
+图片中第二个中间件是指
+
+```javascript
+instance.use(async (ctx, next) => {
+  ctx.request.age = "11";
+  await next();
+  ctx.response.bobby = ['睡觉','学习'];
+});
+```
+
+图片的红线实际上就是`await next()`，next函数是一个分界点，next函数前面部分为请求拦截部分，next函数部分后面为响应拦截部分。
+
+我们可以的出一个完整的请求，中间件执行顺序如下：
+
+`ctx.request.name = "张三"` --> `ctx.request.age = "11"` --> `adapter` --> `ctx.response.bobby = ['睡觉','学习']` -->  `ctx.response.sex = "男"`
+
+经过分析，我们发现，中间件写在前面的，请求拦截部分先执行，响应拦截部分的后执行，这是有洋葱模型所决定的执行顺序
+
+最后，中间件与中间件之间的通信是通过`ctx`对象来实现的，`ctx`对象会贯穿整个中间件的执行流程
 
 ## 总结
 
