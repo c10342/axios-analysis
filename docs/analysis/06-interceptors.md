@@ -258,25 +258,106 @@ promise
 
 ## 思考
 
-我们是否可以使用中间件来实现拦截器呢？类似`express`，`koa2`的中间件模型。这里还有代思考
-
-
-## 总结
-
-经过上面的分析，我们可以得出结论，请求拦截器后面的先执行，响应拦截器前面的先执行。一个请求的整体执行顺序为`请求拦截器-->请求处理函数-->响应拦截器`。其中`请求拦截器`和`响应拦截器`中可以包含异步的操作，因为通过promise可以保证执行的顺序，但是如果是包含了异步的操作，需要自己封装一个promise并返回，代码示例如下：
+我们是否可以使用中间件来实现拦截器呢？类似`express`，`koa2`的中间件模型。下面我们以`koa2`的洋葱模型为例，实现一个自己的拦截器
 
 ```javascript
-axios.interceptors.request.use(
-  (config) => {
-    return new Promise(resolve=>{
-      setTimeout(()=>{
-        config.age = 11
-        resolve(config)
-      },3000)
-    })
+// 中间件
+class Middleware {
+  // 存储中间件
+  cbs = [];
+
+  // 添加中间件
+  use(cb) {
+    this.cbs.push(cb);
+    return this;
+  }
+
+  // 执行中间件
+  exec(ctx, callback) {
+    return new Promise((resolve, reject) => {
+      // resolveFn放在第一位，确保所有中间件执行完毕之后才resolve
+      const resolveFn = async (ctx, next) => {
+        await next();
+        resolve(ctx);
+      };
+      // 所有中间件放到一个数组中
+      const cbs = [resolveFn, ...this.cbs, callback];
+      const dispatch = (index = 0) => {
+        const fn = cbs[index];
+        // 执行中间件，同时还要捕获错误
+        fn(ctx, () => dispatch(++index)).catch((error) => {
+          reject(error);
+        });
+      };
+      dispatch();
+    });
+  }
+}
+
+class PreQuest extends Middleware {
+  constructor(adapter) {
+    super();
+    // 适配器
+    this.adapter = adapter;
+  }
+
+  // 调用adapter适配器发送请求
+  request(config = {}) {
+    const ctx = {
+      request: config,
+      response: {},
+    };
+    // 执行中间件
+    return this.exec(ctx, async (ctx) => {
+      ctx.response = await this.adapter(ctx);
+    });
+  }
+}
+
+function adapter(ctx) {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve({ data: { age: 1 } });
+    }, 2000);
+  });
+}
+
+const instance = new PreQuest(adapter);
+
+instance.use(async (ctx, next) => {
+  ctx.request.path = "request";
+  await next();
+  ctx.response.body = "response";
+});
+instance.use(async (ctx, next) => {
+  await next();
+});
+
+instance
+  .request()
+  .then((res) => {
+    console.log(res);
+  })
+  .catch((error) => {
+    console.log(error);
   });
 ```
 
-在本章中，我们学到`promise`链式调用的用法，这种用法非常巧妙的将`请求拦截器`，`请求处理函数`，`响应拦截器`串联起来，形成一个完整的promise调用链。
+## 总结
+
+经过上面的分析，我们可以得出结论，请求拦截器后面的先执行，响应拦截器前面的先执行。一个请求的整体执行顺序为`请求拦截器-->请求处理函数-->响应拦截器`。其中`请求拦截器`和`响应拦截器`中可以包含异步的操作，因为通过 promise 可以保证执行的顺序，但是如果是包含了异步的操作，需要自己封装一个 promise 并返回，代码示例如下：
+
+```javascript
+axios.interceptors.request.use((config) => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      config.age = 11;
+      resolve(config);
+    }, 3000);
+  });
+});
+```
+
+在本章中，我们学到`promise`链式调用的用法，这种用法非常巧妙的将`请求拦截器`，`请求处理函数`，`响应拦截器`串联起来，形成一个完整的 promise 调用链。
 
 在下一个章节中，我们将会分析`dispatchRequest`函数到底是怎么实现的

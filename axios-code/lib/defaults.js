@@ -103,7 +103,10 @@ var defaults = {
   // 请求超时时间
   timeout: 0,
 
+  // xsrf 防御，原理是通过读取cookie的字段值，然后设置对应的自定义请求头
+  // cookie字段的key值，通过该字段读取cookie值
   xsrfCookieName: 'XSRF-TOKEN',
+  // 请求头header的key值
   xsrfHeaderName: 'X-XSRF-TOKEN',
 
   maxContentLength: -1,

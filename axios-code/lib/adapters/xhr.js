@@ -148,6 +148,7 @@ module.exports = function xhrAdapter(config) {
      * 解决方案：
      * 1、验证 HTTP Referer 字段。该字段记录了http请求的来源地址，但是Referer字段是由浏览器提供的，每个浏览器对于Referer字段的实现可能会有所差异。而且Referer字段是可以被篡改的
      * 2、在 HTTP 请求头中自定义属性并验证。比如添加token并验证。我们可以在请求头中添加token信息，后端通过验证这个token信息，来判断是否为csrf攻击。axios就是基于这种方式去做csrf防御的
+     * 3、在请求地址中添加 token 并验证。这种做法要比验证 HTTP Referer 字段要好一些，但是这种做法会导致请求地址边长，很有可能会超出get请求地址长度的限制。
      */
     // 防御 xsrf
     // 需要在标准浏览器中才能使用，如果是在react-native中就不能使用了
