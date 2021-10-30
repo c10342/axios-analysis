@@ -5,15 +5,17 @@ var utils = require('./../utils');
 module.exports = (
   utils.isStandardBrowserEnv() ?
 
-  // Standard browser envs have full support of the APIs needed to test
-  // whether the request URL is of the same origin as current location.
+  // 标准浏览器环境
+  // 请求URL是否与当前位置的来源相同
     (function standardBrowserEnv() {
+      // IE
       var msie = /(msie|trident)/i.test(navigator.userAgent);
+      // 创建一个a标签，通过a标签去解析url的href，protocol，host，hostname等属性
       var urlParsingNode = document.createElement('a');
       var originURL;
 
       /**
-    * Parse a URL to discover it's components
+    * 解析url
     *
     * @param {String} url The URL to be parsed
     * @returns {Object}
@@ -22,14 +24,14 @@ module.exports = (
         var href = url;
 
         if (msie) {
-        // IE needs attribute set twice to normalize properties
+        // ie浏览器需要设置2次setAttribute才生效
           urlParsingNode.setAttribute('href', href);
           href = urlParsingNode.href;
         }
 
         urlParsingNode.setAttribute('href', href);
 
-        // urlParsingNode provides the UrlUtils interface - http://url.spec.whatwg.org/#urlutils
+        
         return {
           href: urlParsingNode.href,
           protocol: urlParsingNode.protocol ? urlParsingNode.protocol.replace(/:$/, '') : '',
@@ -43,13 +45,26 @@ module.exports = (
             '/' + urlParsingNode.pathname
         };
       }
-
+      // 当前位置的url
       originURL = resolveURL(window.location.href);
+      // 以http://192.168.2.4:8080为例
+      // {
+      //   hash: ""
+      //   host: "192.168.2.4:8080"
+      //   hostname: "192.168.2.4"
+      //   href: "http://192.168.2.4:8080/"
+      //   pathname: "/"
+      //   port: "8080"
+      //   protocol: "http"
+      //   search: ""
+      // }
 
       /**
-    * Determine if a URL shares the same origin as the current location
+    * 请求URL是否与当前位置的来源相同
+    * 
+    * 根据协议，IP地址，端口号来判断是否同源
     *
-    * @param {String} requestURL The URL to test
+    * @param {String} requestURL 请求URL
     * @returns {boolean} True if URL shares the same origin, otherwise false
     */
       return function isURLSameOrigin(requestURL) {
@@ -59,7 +74,7 @@ module.exports = (
       };
     })() :
 
-  // Non standard browser envs (web workers, react-native) lack needed support.
+  // 非标准浏览器环境（web workers、react native）缺少所需的支持
     (function nonStandardBrowserEnv() {
       return function isURLSameOrigin() {
         return true;

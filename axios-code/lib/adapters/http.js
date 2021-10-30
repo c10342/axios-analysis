@@ -16,7 +16,6 @@ var enhanceError = require('../core/enhanceError');
 
 var isHttps = /https:?/;
 
-/*eslint consistent-return:0*/
 module.exports = function httpAdapter(config) {
   return new Promise(function dispatchHttpRequest(resolvePromise, rejectPromise) {
     var resolve = function resolve(value) {
@@ -25,17 +24,18 @@ module.exports = function httpAdapter(config) {
     var reject = function reject(value) {
       rejectPromise(value);
     };
+    // 请求数据
     var data = config.data;
+    // 请求头
     var headers = config.headers;
 
-    // Set User-Agent (required by some servers)
-    // Only set header if it hasn't been set in config
-    // See https://github.com/axios/axios/issues/69
+    // 如果开发者没有设置的`user-agent`，那么就给一个默认的
     if (!headers['User-Agent'] && !headers['user-agent']) {
       headers['User-Agent'] = 'axios/' + pkg.version;
     }
-
     if (data && !utils.isStream(data)) {
+      // 不是流数据的情况下，
+      // 需要对数据进行进一步转换
       if (Buffer.isBuffer(data)) {
         // Nothing to do...
       } else if (utils.isArrayBuffer(data)) {
