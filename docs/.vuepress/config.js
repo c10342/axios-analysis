@@ -47,7 +47,8 @@ module.exports = {
       '/analysis/11-XSRF',
       '/analysis/12-isURLSameOrigin',
       '/analysis/13-cancel-request',
-      '/analysis/14-http'
+      '/analysis/14-http',
+      '/analysis/15-createError',
     ]
   }
 };

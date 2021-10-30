@@ -5,12 +5,12 @@ var enhanceError = require('./enhanceError');
 /**
  * 给error对象添加一些属性，然后返回
  *
- * @param {string} message The error message.
- * @param {Object} config The config.
- * @param {string} [code] The error code (for example, 'ECONNABORTED').
- * @param {Object} [request] The request.
- * @param {Object} [response] The response.
- * @returns {Error} The created error.
+ * @param {string} message 错误消息
+ * @param {Object} config 配置项
+ * @param {string} [code] 错误码
+ * @param {Object} [request] 请求实例
+ * @param {Object} [response] 响应数据对象
+ * @returns {Error} 返回一个error对象
  */
 module.exports = function createError(message, config, code, request, response) {
   var error = new Error(message);

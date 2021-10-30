@@ -217,25 +217,35 @@ module.exports = function httpAdapter(config) {
     }
 
     var transport;
+    // 是否https代理
     var isHttpsProxy =
       isHttpsRequest && (proxy ? isHttps.test(proxy.protocol) : true);
     if (config.transport) {
+      // 配置项存在则使用配置项的
       transport = config.transport;
     } else if (config.maxRedirects === 0) {
+      // 最大重定向次数为0
+      // 判断使用https模块还是http模块
       transport = isHttpsProxy ? https : http;
     } else {
+      // 允许重定向
       if (config.maxRedirects) {
         options.maxRedirects = config.maxRedirects;
       }
+      // 判断使用https重定向模块还是http重定模块
       transport = isHttpsProxy ? httpsFollow : httpFollow;
     }
 
+    // 若是设置了长度而且大于-1则添加到options上
     if (config.maxBodyLength > -1) {
       options.maxBodyLength = config.maxBodyLength;
     }
 
+    // 以上的代码就是 根据协议决定使用对应的请求库,而且设定最大重定向次数和请求内容长度
+
     // 创建一个请求
     var req = transport.request(options, function handleResponse(res) {
+      // 中断了请求
       if (req.aborted) return;
 
       // uncompress the response body transparently if required
@@ -244,7 +254,9 @@ module.exports = function httpAdapter(config) {
       // return the last request in case of redirects
       var lastRequest = res.req || req;
 
-      // if no content, is HEAD request or decompress disabled we should not decompress
+      // 状态码是否`204`决定需不须要进行压缩
+      // 带有压缩指示的`content-encoding`
+      // HTTP协议中 204 No Content 成功状态响应码表示目前请求成功，但客户端不须要更新其现有页面
       if (
         res.statusCode !== 204 &&
         lastRequest.method !== "HEAD" &&
@@ -255,15 +267,15 @@ module.exports = function httpAdapter(config) {
           case "gzip":
           case "compress":
           case "deflate":
-            // add the unzipper to the body stream processing pipeline
+            // 解压管道
             stream = stream.pipe(zlib.createUnzip());
 
-            // remove the content-encoding in order to not confuse downstream operations
+            // 删除头避免混淆后续操做
             delete res.headers["content-encoding"];
             break;
         }
       }
-
+      // 拼装响应对象
       var response = {
         status: res.statusCode,
         statusText: res.statusMessage,
@@ -271,20 +283,23 @@ module.exports = function httpAdapter(config) {
         config: config,
         request: lastRequest,
       };
-
+      // 根据responseType决定怎么解析响应数据
       if (config.responseType === "stream") {
+        // stream则直接赋值
         response.data = stream;
         settle(resolve, reject, response);
       } else {
         var responseBuffer = [];
+        // 利用`stream`事件解析
         stream.on("data", function handleStreamData(chunk) {
           responseBuffer.push(chunk);
 
-          // make sure the content length is not over the maxContentLength if specified
+          // 保证内容长度不超过`maxContentLength`配置设置的
           if (
             config.maxContentLength > -1 &&
             Buffer.concat(responseBuffer).length > config.maxContentLength
           ) {
+            // 销毁流
             stream.destroy();
             reject(
               createError(
@@ -298,12 +313,12 @@ module.exports = function httpAdapter(config) {
             );
           }
         });
-
+        // 流错误
         stream.on("error", function handleStreamError(err) {
           if (req.aborted) return;
           reject(enhanceError(err, config, null, lastRequest));
         });
-
+        // 流结束
         stream.on("end", function handleStreamEnd() {
           var responseData = Buffer.concat(responseBuffer);
           if (config.responseType !== "arraybuffer") {
@@ -322,13 +337,13 @@ module.exports = function httpAdapter(config) {
       }
     });
 
-    // Handle errors
+    // 请求错误
     req.on("error", function handleRequestError(err) {
       if (req.aborted && err.code !== "ERR_FR_TOO_MANY_REDIRECTS") return;
       reject(enhanceError(err, config, null, req));
     });
 
-    // Handle request timeout
+    // 超时
     if (config.timeout) {
       // Sometime, the response will be very slow, and does not respond, the connect event will be block by event loop system.
       // And timer callback will be fired, and abort() will be invoked before connection, then get "socket hang up" and code ECONNRESET.
@@ -349,7 +364,7 @@ module.exports = function httpAdapter(config) {
     }
 
     if (config.cancelToken) {
-      // Handle cancellation
+      // 监听外部取消请求事件，前面已经有详细讲解了
       config.cancelToken.promise.then(function onCanceled(cancel) {
         if (req.aborted) return;
 
@@ -360,12 +375,14 @@ module.exports = function httpAdapter(config) {
 
     // Send the request
     if (utils.isStream(data)) {
+      // 发送流数据请求
       data
         .on("error", function handleStreamError(err) {
           reject(enhanceError(err, config, null, req));
         })
         .pipe(req);
     } else {
+      // 发送请求
       req.end(data);
     }
   });
