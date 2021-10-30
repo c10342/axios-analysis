@@ -1,23 +1,33 @@
-'use strict';
+"use strict";
 
-var utils = require('./../utils');
-var settle = require('./../core/settle');
-var buildFullPath = require('../core/buildFullPath');
-var buildURL = require('./../helpers/buildURL');
-var http = require('http');
-var https = require('https');
-var httpFollow = require('follow-redirects').http;
-var httpsFollow = require('follow-redirects').https;
-var url = require('url');
-var zlib = require('zlib');
-var pkg = require('./../../package.json');
-var createError = require('../core/createError');
-var enhanceError = require('../core/enhanceError');
+var utils = require("./../utils");
+var settle = require("./../core/settle");
+var buildFullPath = require("../core/buildFullPath");
+var buildURL = require("./../helpers/buildURL");
+// http请求库
+var http = require("http");
+// https请求库
+var https = require("https");
+// 替代nodejs的http和https模块，自动跟随重定向。
+var httpFollow = require("follow-redirects").http;
+var httpsFollow = require("follow-redirects").https;
+// 解析和格式化url
+var url = require("url");
+// 同步压缩或解压node.js buffers.
+var zlib = require("zlib");
+var pkg = require("./../../package.json");
+var createError = require("../core/createError");
+var enhanceError = require("../core/enhanceError");
+
+// https://www.shangmayuan.com/a/ba681b2fe1374256af0ead24.html
 
 var isHttps = /https:?/;
 
 module.exports = function httpAdapter(config) {
-  return new Promise(function dispatchHttpRequest(resolvePromise, rejectPromise) {
+  return new Promise(function dispatchHttpRequest(
+    resolvePromise,
+    rejectPromise
+  ) {
     var resolve = function resolve(value) {
       resolvePromise(value);
     };
@@ -30,95 +40,133 @@ module.exports = function httpAdapter(config) {
     var headers = config.headers;
 
     // 如果开发者没有设置的`user-agent`，那么就给一个默认的
-    if (!headers['User-Agent'] && !headers['user-agent']) {
-      headers['User-Agent'] = 'axios/' + pkg.version;
+    if (!headers["User-Agent"] && !headers["user-agent"]) {
+      headers["User-Agent"] = "axios/" + pkg.version;
     }
     if (data && !utils.isStream(data)) {
-      // 不是流数据的情况下，
+      // 在有data数据而且不为流的状况下
       // 需要对数据进行进一步转换
       if (Buffer.isBuffer(data)) {
         // Nothing to do...
       } else if (utils.isArrayBuffer(data)) {
         data = Buffer.from(new Uint8Array(data));
       } else if (utils.isString(data)) {
-        data = Buffer.from(data, 'utf-8');
+        data = Buffer.from(data, "utf-8");
       } else {
-        return reject(createError(
-          'Data after transformation must be a string, an ArrayBuffer, a Buffer, or a Stream',
-          config
-        ));
+        return reject(
+          createError(
+            "Data after transformation must be a string, an ArrayBuffer, a Buffer, or a Stream",
+            config
+          )
+        );
       }
 
-      // Add Content-Length header if data exists
-      headers['Content-Length'] = data.length;
+      // 添加Content-Length请求头，告诉后台数据的长度
+      headers["Content-Length"] = data.length;
     }
 
-    // HTTP basic authentication
+    // http身份验证
     var auth = undefined;
     if (config.auth) {
-      var username = config.auth.username || '';
-      var password = config.auth.password || '';
-      auth = username + ':' + password;
+      // 若是配置含有auth,则拼接用户名和密码
+      var username = config.auth.username || "";
+      var password = config.auth.password || "";
+      auth = username + ":" + password;
     }
 
-    // Parse url
+    // 拼装完整的请求地址
     var fullPath = buildFullPath(config.baseURL, config.url);
+    // 解析地址
     var parsed = url.parse(fullPath);
-    var protocol = parsed.protocol || 'http:';
+    // 获取协议
+    var protocol = parsed.protocol || "http:";
 
     if (!auth && parsed.auth) {
-      var urlAuth = parsed.auth.split(':');
-      var urlUsername = urlAuth[0] || '';
-      var urlPassword = urlAuth[1] || '';
-      auth = urlUsername + ':' + urlPassword;
+      // 验证信息不包含在配置而在请求地址上须要作兼容处理;
+      var urlAuth = parsed.auth.split(":");
+      var urlUsername = urlAuth[0] || "";
+      var urlPassword = urlAuth[1] || "";
+      auth = urlUsername + ":" + urlPassword;
     }
 
     if (auth) {
+      // 若是有auth信息的状况下要删除Authorization头
       delete headers.Authorization;
     }
 
+    // 判断是否为https请求
     var isHttpsRequest = isHttps.test(protocol);
+    // 若是是https协议下获取配置的httpsAgent信息,否则拿httpAgent信息
     var agent = isHttpsRequest ? config.httpsAgent : config.httpAgent;
 
     var options = {
-      path: buildURL(parsed.path, config.params, config.paramsSerializer).replace(/^\?/, ''),
+      // 请求的url
+      path: buildURL(
+        parsed.path,
+        config.params,
+        config.paramsSerializer
+      ).replace(/^\?/, ""),
+      // 请求方法
       method: config.method.toUpperCase(),
+      // 请求头
       headers: headers,
+      // 控制 Agent 的行为。 可能的值：
+      // undefined（默认）: 为此主机和端口使用 http.globalAgent。
+      // Agent 对象: 显式使用传入的 Agent。
+      // false: 使用具有默认值的新 Agent。
       agent: agent,
       agents: { http: config.httpAgent, https: config.httpsAgent },
-      auth: auth
+      // 基本身份验证，即 'user:password' 计算授权标头。
+      auth: auth,
     };
 
     if (config.socketPath) {
+      // Unix 域套接字（如果指定了 host 或 port 之一，则不能使用，因为其指定了 TCP 套接字）
       options.socketPath = config.socketPath;
     } else {
+      // host 的别名。 为了支持 url.parse()，如果同时指定了 host 和 hostname，则将使用 hostname。
       options.hostname = parsed.hostname;
+      // 远程服务器的端口。 默认值: 如果有设置则为 defaultPort，否则为 80。
       options.port = parsed.port;
     }
 
     var proxy = config.proxy;
+    // 若是没有传递代理参数的话会默认配置
     if (!proxy && proxy !== false) {
-      var proxyEnv = protocol.slice(0, -1) + '_proxy';
-      var proxyUrl = process.env[proxyEnv] || process.env[proxyEnv.toUpperCase()];
+      // 协议名后拼接字符串,表明代理的环境变量名
+      var proxyEnv = protocol.slice(0, -1) + "_proxy";
+      // 代理地址
+      var proxyUrl =
+        process.env[proxyEnv] || process.env[proxyEnv.toUpperCase()];
       if (proxyUrl) {
+        // 解析代理地址
         var parsedProxyUrl = url.parse(proxyUrl);
+        // no_proxy环境变量
         var noProxyEnv = process.env.no_proxy || process.env.NO_PROXY;
         var shouldProxy = true;
 
         if (noProxyEnv) {
-          var noProxy = noProxyEnv.split(',').map(function trim(s) {
+          // 返回分割而且清除空格后的数组
+          var noProxy = noProxyEnv.split(",").map(function trim(s) {
             return s.trim();
           });
-
+          // 是否应该代理
           shouldProxy = !noProxy.some(function proxyMatch(proxyElement) {
+            // 不存在返回false
             if (!proxyElement) {
               return false;
             }
-            if (proxyElement === '*') {
+            // 通配符返回true
+            if (proxyElement === "*") {
               return true;
             }
-            if (proxyElement[0] === '.' &&
-                parsed.hostname.substr(parsed.hostname.length - proxyElement.length) === proxyElement) {
+            // 判断proxyElement与请求url的域名是否相等
+            if (
+              proxyElement[0] === "." &&
+              parsed.hostname.substr(
+                parsed.hostname.length - proxyElement.length
+              ) === proxyElement
+            ) {
               return true;
             }
 
@@ -126,18 +174,18 @@ module.exports = function httpAdapter(config) {
           });
         }
 
-
         if (shouldProxy) {
+          // 拼装代理配置
           proxy = {
             host: parsedProxyUrl.hostname,
-            port: parsedProxyUrl.port
+            port: parsedProxyUrl.port,
           };
 
           if (parsedProxyUrl.auth) {
-            var proxyUrlAuth = parsedProxyUrl.auth.split(':');
+            var proxyUrlAuth = parsedProxyUrl.auth.split(":");
             proxy.auth = {
               username: proxyUrlAuth[0],
-              password: proxyUrlAuth[1]
+              password: proxyUrlAuth[1],
             };
           }
         }
@@ -145,21 +193,32 @@ module.exports = function httpAdapter(config) {
     }
 
     if (proxy) {
+      // 若是有代理配置,添加到options
       options.hostname = proxy.host;
       options.host = proxy.host;
-      options.headers.host = parsed.hostname + (parsed.port ? ':' + parsed.port : '');
+      options.headers.host =
+        parsed.hostname + (parsed.port ? ":" + parsed.port : "");
       options.port = proxy.port;
-      options.path = protocol + '//' + parsed.hostname + (parsed.port ? ':' + parsed.port : '') + options.path;
+      options.path =
+        protocol +
+        "//" +
+        parsed.hostname +
+        (parsed.port ? ":" + parsed.port : "") +
+        options.path;
 
-      // Basic proxy authorization
+      // Basic 认证
       if (proxy.auth) {
-        var base64 = Buffer.from(proxy.auth.username + ':' + proxy.auth.password, 'utf8').toString('base64');
-        options.headers['Proxy-Authorization'] = 'Basic ' + base64;
+        var base64 = Buffer.from(
+          proxy.auth.username + ":" + proxy.auth.password,
+          "utf8"
+        ).toString("base64");
+        options.headers["Proxy-Authorization"] = "Basic " + base64;
       }
     }
 
     var transport;
-    var isHttpsProxy = isHttpsRequest && (proxy ? isHttps.test(proxy.protocol) : true);
+    var isHttpsProxy =
+      isHttpsRequest && (proxy ? isHttps.test(proxy.protocol) : true);
     if (config.transport) {
       transport = config.transport;
     } else if (config.maxRedirects === 0) {
@@ -175,7 +234,7 @@ module.exports = function httpAdapter(config) {
       options.maxBodyLength = config.maxBodyLength;
     }
 
-    // Create the request
+    // 创建一个请求
     var req = transport.request(options, function handleResponse(res) {
       if (req.aborted) return;
 
@@ -185,20 +244,23 @@ module.exports = function httpAdapter(config) {
       // return the last request in case of redirects
       var lastRequest = res.req || req;
 
-
       // if no content, is HEAD request or decompress disabled we should not decompress
-      if (res.statusCode !== 204 && lastRequest.method !== 'HEAD' && config.decompress !== false) {
-        switch (res.headers['content-encoding']) {
-        /*eslint default-case:0*/
-        case 'gzip':
-        case 'compress':
-        case 'deflate':
-        // add the unzipper to the body stream processing pipeline
-          stream = stream.pipe(zlib.createUnzip());
+      if (
+        res.statusCode !== 204 &&
+        lastRequest.method !== "HEAD" &&
+        config.decompress !== false
+      ) {
+        switch (res.headers["content-encoding"]) {
+          /*eslint default-case:0*/
+          case "gzip":
+          case "compress":
+          case "deflate":
+            // add the unzipper to the body stream processing pipeline
+            stream = stream.pipe(zlib.createUnzip());
 
-          // remove the content-encoding in order to not confuse downstream operations
-          delete res.headers['content-encoding'];
-          break;
+            // remove the content-encoding in order to not confuse downstream operations
+            delete res.headers["content-encoding"];
+            break;
         }
       }
 
@@ -207,35 +269,49 @@ module.exports = function httpAdapter(config) {
         statusText: res.statusMessage,
         headers: res.headers,
         config: config,
-        request: lastRequest
+        request: lastRequest,
       };
 
-      if (config.responseType === 'stream') {
+      if (config.responseType === "stream") {
         response.data = stream;
         settle(resolve, reject, response);
       } else {
         var responseBuffer = [];
-        stream.on('data', function handleStreamData(chunk) {
+        stream.on("data", function handleStreamData(chunk) {
           responseBuffer.push(chunk);
 
           // make sure the content length is not over the maxContentLength if specified
-          if (config.maxContentLength > -1 && Buffer.concat(responseBuffer).length > config.maxContentLength) {
+          if (
+            config.maxContentLength > -1 &&
+            Buffer.concat(responseBuffer).length > config.maxContentLength
+          ) {
             stream.destroy();
-            reject(createError('maxContentLength size of ' + config.maxContentLength + ' exceeded',
-              config, null, lastRequest));
+            reject(
+              createError(
+                "maxContentLength size of " +
+                  config.maxContentLength +
+                  " exceeded",
+                config,
+                null,
+                lastRequest
+              )
+            );
           }
         });
 
-        stream.on('error', function handleStreamError(err) {
+        stream.on("error", function handleStreamError(err) {
           if (req.aborted) return;
           reject(enhanceError(err, config, null, lastRequest));
         });
 
-        stream.on('end', function handleStreamEnd() {
+        stream.on("end", function handleStreamEnd() {
           var responseData = Buffer.concat(responseBuffer);
-          if (config.responseType !== 'arraybuffer') {
+          if (config.responseType !== "arraybuffer") {
             responseData = responseData.toString(config.responseEncoding);
-            if (!config.responseEncoding || config.responseEncoding === 'utf8') {
+            if (
+              !config.responseEncoding ||
+              config.responseEncoding === "utf8"
+            ) {
               responseData = utils.stripBOM(responseData);
             }
           }
@@ -247,8 +323,8 @@ module.exports = function httpAdapter(config) {
     });
 
     // Handle errors
-    req.on('error', function handleRequestError(err) {
-      if (req.aborted && err.code !== 'ERR_FR_TOO_MANY_REDIRECTS') return;
+    req.on("error", function handleRequestError(err) {
+      if (req.aborted && err.code !== "ERR_FR_TOO_MANY_REDIRECTS") return;
       reject(enhanceError(err, config, null, req));
     });
 
@@ -261,7 +337,14 @@ module.exports = function httpAdapter(config) {
       // ClientRequest.setTimeout will be fired on the specify milliseconds, and can make sure that abort() will be fired after connect.
       req.setTimeout(config.timeout, function handleRequestTimeout() {
         req.abort();
-        reject(createError('timeout of ' + config.timeout + 'ms exceeded', config, 'ECONNABORTED', req));
+        reject(
+          createError(
+            "timeout of " + config.timeout + "ms exceeded",
+            config,
+            "ECONNABORTED",
+            req
+          )
+        );
       });
     }
 
@@ -277,9 +360,11 @@ module.exports = function httpAdapter(config) {
 
     // Send the request
     if (utils.isStream(data)) {
-      data.on('error', function handleStreamError(err) {
-        reject(enhanceError(err, config, null, req));
-      }).pipe(req);
+      data
+        .on("error", function handleStreamError(err) {
+          reject(enhanceError(err, config, null, req));
+        })
+        .pipe(req);
     } else {
       req.end(data);
     }

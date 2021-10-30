@@ -4,6 +4,8 @@ var createError = require('./createError');
 
 /**
  * 根据响应状态码，调用resolve或者reject
+ * 
+ * 在获得响应请求的基础上,决定返回成功或者失败的Promise态,当失败的时候会建立自定义错误
  *
  * @param {Function} resolve A function that resolves the promise.
  * @param {Function} reject A function that rejects the promise.
