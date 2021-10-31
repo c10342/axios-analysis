@@ -23,6 +23,7 @@ module.exports = {
     nav: [
       { text: "首页", link: "/" },
       { text: "源码分析", link: "/analysis/01-prepare" },
+      { text: "进阶", link: "/wx-axios/01-prepare" },
       {
         text: "其他",
         items: [
@@ -33,24 +34,30 @@ module.exports = {
       }
     ],
     displayAllHeaders: true,
-    sidebar: [
-      '/analysis/01-prepare',
-      '/analysis/02-instance-create',
-      '/analysis/03-axios-form',
-      '/analysis/04-buildURL',
-      '/analysis/05-request',
-      '/analysis/06-interceptors',
-      '/analysis/07-dispatchRequest',
-      '/analysis/08-transformData',
-      '/analysis/09-xhr',
-      '/analysis/10-authentication',
-      '/analysis/11-XSRF',
-      '/analysis/12-isURLSameOrigin',
-      '/analysis/13-cancel-request',
-      '/analysis/14-http',
-      '/analysis/15-createError',
-      '/analysis/16-config',
-      '/analysis/17-summary',
-    ]
+    sidebar: {
+      '/analysis/': [
+        '01-prepare',  
+        '02-instance-create',  
+        '03-axios-form',  
+        '04-buildURL',  
+        '05-request',  
+        '06-interceptors',  
+        '07-dispatchRequest',  
+        '08-transformData',  
+        '09-xhr',  
+        '10-authentication',  
+        '11-XSRF',  
+        '12-isURLSameOrigin',  
+        '13-cancel-request',  
+        '14-http',  
+        '15-createError',  
+        '16-config',  
+        '17-summary',  
+      ],
+      '/wx-axios/': [
+        '01-prepare',  
+        '02-instance-create',  
+      ]
+    }
   }
 };
