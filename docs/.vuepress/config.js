@@ -49,6 +49,8 @@ module.exports = {
       '/analysis/13-cancel-request',
       '/analysis/14-http',
       '/analysis/15-createError',
+      '/analysis/16-config',
+      '/analysis/17-summary',
     ]
   }
 };

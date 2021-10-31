@@ -2,7 +2,7 @@
 home: true
 heroImage: /images/logo.png
 heroText: 逐行剖析 axios 源码
-tagline: 十四个章节，逐个击破
+tagline: 十七个章节，逐个击破
 actionText: 开始学习 →
 actionLink: /analysis/01-prepare
 footer: MIT Licensed | Copyright © 2021-present
@@ -78,3 +78,15 @@ footer: MIT Licensed | Copyright © 2021-present
 **第十四章 http 请求处理函数**
 
 本章节主要是分析  http 请求处理函数的实现。通过本章节的学习，你会了解到node是如何通过 http 发送一个请求的
+
+**第十五章 createError 函数分析**
+
+本章节主要是分析  createError 函数的实现。通过本章节的学习，你会了解到axios的错误对象是怎么来的，以及一些额外的扩展知识
+
+**第十六章 请求配置项**
+
+本章节主要是分析axios提供了那些默认的请求配置项，以及完整的请求配置项有那些。通过本章节的学习，你会了解到请求配置项那些是通用的字段，那些只能用在node环境或者web端浏览器环境
+
+**第十七章 总结**
+
+本章节主要是对前面章节学习的总结，以及阅读感想和收获
