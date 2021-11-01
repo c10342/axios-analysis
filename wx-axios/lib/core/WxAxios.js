@@ -1,4 +1,4 @@
-import { forEach, isString } from "../utils";
+import { forEach, isString,methods } from "../utils";
 import InterceptorManager from "./InterceptorManager";
 import mergeConfig from "./mergeConfig";
 import dispatchRequest from "./dispatchRequest";
@@ -47,41 +47,8 @@ WxAxios.prototype.request = function (url, config = {}) {
   return promise;
 };
 
-// 下载文件
-WxAxios.prototype.download = function (url, config) {
-  config = config || {};
-  return this.request(
-    mergeConfig(config, {
-      method: "download",
-      url,
-    })
-  );
-};
 
-// 上传文件
-WxAxios.prototype.upload = function (url, config) {
-  config = config || {};
-  return this.request(
-    mergeConfig(config, {
-      method: "upload",
-      url,
-    })
-  );
-};
-
-// wx.request method 的合法值
-const requestMethods = [
-  "options",
-  "get",
-  "head",
-  "post",
-  "put",
-  "delete",
-  "trace",
-  "connect",
-];
-
-forEach(requestMethods, (method) => {
+forEach(methods, (method) => {
   WxAxios.prototype[method] = function (url, config) {
     config = config || {};
     return this.request(

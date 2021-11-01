@@ -1,5 +1,5 @@
 import WxAxios from "./core/WxAxios";
-import { forEach, isFunction } from "./utils";
+import { bind } from "./utils";
 import mergeConfig from "./core/mergeConfig";
 import defaults from "./defaults";
 import CancelToken from "./cancel/CancelToken";
@@ -8,19 +8,12 @@ import isCancel from "./cancel/isCancel";
 
 function createInstance(defaultConfig) {
   const context = new WxAxios(defaultConfig);
+
   const instance = WxAxios.prototype.request.bind(context);
 
-  forEach(WxAxios.prototype, (value, key) => {
-    if (isFunction(value)) {
-      instance[key] = value.bind(context);
-    } else {
-      instance[key] = value;
-    }
-  });
+  bind(WxAxios.prototype,instance,context)
 
-  forEach(context, (value, key) => {
-    instance[key] = value;
-  });
+  bind(context,instance)
 }
 
 const wxAxios = createInstance(defaults);
