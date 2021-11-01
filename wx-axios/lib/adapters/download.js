@@ -1,10 +1,9 @@
 import buildFullPath from "../core/buildFullPath";
 import buildURL from "../helpers/buildURL";
 import enhanceError from "../core/enhanceError";
-import settle from '../core/settle'
+import settle from "../core/settle";
 import Base64 from "../helpers/base64";
 import { forEach } from "../utils";
-
 
 function downloadAdapter(config) {
   return new Promise((resolve, reject) => {
@@ -32,8 +31,8 @@ function downloadAdapter(config) {
     const successFn = (res) => {
       const response = {
         data: {
-            tempFilePath:res.tempFilePath,
-            filePath:res.filePath
+          tempFilePath: res.tempFilePath,
+          filePath: res.filePath,
         },
         status: res.statusCode,
         statusText: res.errMsg,
@@ -54,30 +53,24 @@ function downloadAdapter(config) {
       success: successFn,
       fail: failFn,
     };
-    forEach(
-        [
-          "timeout",
-          "filePath"
-        ],
-        (val, key) => {
-          if (key in config) {
-            options[key] = val;
-          }
+    forEach(["timeout", "filePath"], (key) => {
+      if (key in config) {
+        options[key] = config[key];
+      }
+    });
+    if (config.cancelToken) {
+      config.cancelToken.then((cancel) => {
+        if (!request) {
+          return;
         }
-      );
-      if (config.cancelToken) {
-        config.cancelToken.then((cancel) => {
-          if (!request) {
-            return;
-          }
-          request.abort();
-          reject(cancel);
-        });
-      }
-      request =  wx.downloadFile(options)
-      if(config.onDownloadProgress){
-          request.onProgressUpdate(config.onDownloadProgress)
-      }
+        request.abort();
+        reject(cancel);
+      });
+    }
+    request = wx.downloadFile(options);
+    if (config.onDownloadProgress) {
+      request.onProgressUpdate(config.onDownloadProgress);
+    }
   });
 }
 

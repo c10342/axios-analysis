@@ -4,7 +4,7 @@ function mergeConfig(config1, config2) {
   if (!isPlainObject(config1) || !isPlainObject(config2)) {
     return {};
   }
-  config1 = deepClone(config11);
+  config1 = deepClone(config1);
   config2 = deepClone(config2);
   const mergeObject = (targetObj,fromObj) => {
     forEach(fromObj, (value, key) => {
@@ -22,6 +22,8 @@ function mergeConfig(config1, config2) {
   };
 
   mergeObject(config1,config2)
+
+  return config1
 }
 
 export default mergeConfig;

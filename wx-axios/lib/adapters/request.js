@@ -2,7 +2,7 @@ import buildFullPath from "../core/buildFullPath";
 import Base64 from "../helpers/base64";
 import buildURL from "../helpers/buildURL";
 import { forEach } from "../utils";
-import settle from '../core/settle'
+import settle from "../core/settle";
 import enhanceError from "../core/enhanceError";
 
 function requestAdapter(config) {
@@ -40,15 +40,9 @@ function requestAdapter(config) {
       settle(resolve, reject, response);
     };
 
-    const failFn = (error)=>{
-        reject(enhanceError(
-            error,
-            config,
-            null,
-            request,
-            null
-        ))
-    }
+    const failFn = (error) => {
+      reject(enhanceError(error, config, null, request, null));
+    };
 
     const options = {
       url: buildURL(fullPath, config.params, config.paramsSerializer),
@@ -69,9 +63,9 @@ function requestAdapter(config) {
         "enableHttpDNS",
         "httpDNSServiceId",
       ],
-      (val, key) => {
+      (key) => {
         if (key in config) {
-          options[key] = val;
+          options[key] = config[key];
         }
       }
     );

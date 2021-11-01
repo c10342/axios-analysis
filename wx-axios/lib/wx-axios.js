@@ -14,6 +14,8 @@ function createInstance(defaultConfig) {
   bind(WxAxios.prototype,instance,context)
 
   bind(context,instance)
+
+  return instance
 }
 
 const wxAxios = createInstance(defaults);

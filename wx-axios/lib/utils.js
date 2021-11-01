@@ -76,7 +76,7 @@ export function deepClone(obj, weakMap = new WeakMap()) {
     return obj;
   }
   let data;
-  const Constructor = data.constructor;
+  const Constructor = obj.constructor;
   if (isPlainObject(obj) || isArray(obj)) {
     // 数组和普通类型数据
     // 解决循环引用
