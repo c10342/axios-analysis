@@ -39,9 +39,7 @@ const defaults = {
     common: {},
   },
   // 适配器
-  adapter: (config) => {
-    return getDefaultAdapter(config);
-  },
+  adapter: getDefaultAdapter,
   // 请求地址
   // url:'',
   // 取消请求令牌
