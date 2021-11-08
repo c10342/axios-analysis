@@ -117,3 +117,9 @@ export default downloadAdapter;
 对于取消下载文件，`wx.downloadFile`返回的对象提供了`abort`方法来取消下载文件
 
 对于监听文件下载进度事件，`wx.downloadFile`返回的对象提供了`onProgressUpdate`方法来进行监听
+
+## 总结
+
+文件下载的实现比较简单，通过对`wx.downloadFile`的封装，我们也实现了跟`axios`下载文件一样的功能，比如监听文件下载等功能
+
+通过本章节的学习，相信大家对微信小程序是如何下载文件已经有了一定的了解了
