@@ -174,7 +174,6 @@ var obj = {
 console.log(obj == 1); // ==> true
 ```
 
-
 ## 总结
 
 通过本章的学习，相信你对`createError`函数的功能作用是什么应该有了一定的了解了。并且我们通过扩展，讲解了对象上面`toJSON`，`valueOf`，`toString`函数的作用

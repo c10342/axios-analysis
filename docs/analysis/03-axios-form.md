@@ -41,7 +41,7 @@ Axios.prototype.getUri = function getUri(config) {
 utils.forEach(
   ["delete", "get", "head", "options"],
   function forEachMethodNoData(method) {
-    Axios.prototype[method] = function (url, config) {
+    Axios.prototype[method] = function(url, config) {
       // 实际上是调用了`request`函数
       return this.request(
         mergeConfig(config || {}, {
@@ -57,7 +57,7 @@ utils.forEach(
 // 添加请求方法别名
 utils.forEach(["post", "put", "patch"], function forEachMethodWithData(method) {
   // 实际上是调用了`request`函数
-  Axios.prototype[method] = function (url, data, config) {
+  Axios.prototype[method] = function(url, data, config) {
     return this.request(
       mergeConfig(config || {}, {
         method: method,
@@ -81,20 +81,20 @@ axios.defaults.baseURL = "http://xxx.xx.x";
 
 // 添加请求拦截器
 axios.interceptors.request.use(
-  function (config) {
+  function(config) {
     return config;
   },
-  function (error) {
+  function(error) {
     return Promise.reject(error);
   }
 );
 
 // 添加响应拦截器
 axios.interceptors.response.use(
-  function (response) {
+  function(response) {
     return response;
   },
-  function (error) {
+  function(error) {
     return Promise.reject(error);
   }
 );

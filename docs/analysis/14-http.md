@@ -392,18 +392,17 @@ module.exports = function httpAdapter(config) {
     }
   });
 };
-
 ```
 
 ## 执行流程
 
-1、传入请求的配置信息，返回新的Promise，而且将改变状态的触发函数赋值到变量，当请求头不包含`User-Agent`或者`user-agent`的时候默认赋值。
+1、传入请求的配置信息，返回新的 Promise，而且将改变状态的触发函数赋值到变量，当请求头不包含`User-Agent`或者`user-agent`的时候默认赋值。
 
 2、在有请求数据而且不为流的情况下，根据请求数据的类型做出对应的转换并设置`Content-Length`请求头的值为请求数据的长度，都不符合的状况下返回错误对象
 
 3、检查`config`配置中是否有`auth`参数，有就拼接用户名和密码
 
-4、根据`baseURL`和`url`配置项拼接出完整请求地址，并使用node的`url`模块的`parse`对请求地址进行解析，得到请求协议
+4、根据`baseURL`和`url`配置项拼接出完整请求地址，并使用 node 的`url`模块的`parse`对请求地址进行解析，得到请求协议
 
 5、当配置项中不包含`auth`参数，就检查请求地址上面是否存在对应的`auth`参数，有就拼接用户名和密码。这一步实际为兼容性处理
 
@@ -433,7 +432,7 @@ module.exports = function httpAdapter(config) {
 
 18、对于`stream`数据，数据添加到请求管道流，否则就直接调用`end`方法发送请求
 
-注意：关于`node`如何发送http请求，大家可能会有比较陌生，这里建议大家先看一下官网的文档，点击[这里](http://nodejs.cn/api/http.html)查看
+注意：关于`node`如何发送 http 请求，大家可能会有比较陌生，这里建议大家先看一下官网的文档，点击[这里](http://nodejs.cn/api/http.html)查看
 
 ## 总结
 

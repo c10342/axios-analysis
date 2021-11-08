@@ -9,18 +9,17 @@
 我们先来分析一下源码，源码是在`lib/axios.js`文件
 
 ```javascript
-var utils = require('./utils');
-var bind = require('./helpers/bind');
-var Axios = require('./core/Axios');
-var mergeConfig = require('./core/mergeConfig');
-var defaults = require('./defaults');
+var utils = require("./utils");
+var bind = require("./helpers/bind");
+var Axios = require("./core/Axios");
+var mergeConfig = require("./core/mergeConfig");
+var defaults = require("./defaults");
 
 // 创建一个axios实例
 function createInstance(defaultConfig) {
-
   // 通过`new`得到一个`Axios`实例，但是最终return的并不是这个实例
   var context = new Axios(defaultConfig);
-  
+
   // 获取`Axios`原型链上面的`request`方法，并将其this绑定为context
   // 这里实际上可以写成`Axios.prototype.request.bind(context)`
   var instance = bind(Axios.prototype.request, context);
@@ -47,21 +46,20 @@ axios.create = function create(instanceConfig) {
 };
 
 // 挂载取消请求的相关东西
-axios.Cancel = require('./cancel/Cancel');
-axios.CancelToken = require('./cancel/CancelToken');
-axios.isCancel = require('./cancel/isCancel');
+axios.Cancel = require("./cancel/Cancel");
+axios.CancelToken = require("./cancel/CancelToken");
+axios.isCancel = require("./cancel/isCancel");
 
 // 添加all和spread方法
 axios.all = function all(promises) {
   return Promise.all(promises);
 };
-axios.spread = require('./helpers/spread');
+axios.spread = require("./helpers/spread");
 
 // 导出axios
 module.exports = axios;
 
 module.exports.default = axios;
-
 ```
 
 ## 创建流程
@@ -86,38 +84,38 @@ module.exports.default = axios;
 
 ## 注意点
 
-细心的小伙伴可能会发现源码当中有这么2行代码：
+细心的小伙伴可能会发现源码当中有这么 2 行代码：
 
 ```javascript
-  utils.extend(instance, Axios.prototype, context);
+utils.extend(instance, Axios.prototype, context);
 
-  utils.extend(instance, context);
+utils.extend(instance, context);
 ```
 
 其中 `utils.extend(A,B)` 函数是把`B`的属性或者方法挂在到`A`中
 
 有人可能会有疑问，`context`实例上已经存在了`Axios.prototype`上面的属性和方法，比方说`Axios.prototype`上面存在一个`request`方法，那么我们可以通过`context.request`去访问这个方法。为什么需要`utils.extend(instance, Axios.prototype, context)`这一行代码呢。
 
-其实，在js中遍历一个对象的时候，是不能遍历到该对象所指向的`prototype`原型链上面的属性和方法，只能遍历到对象上本身的属性和方法。下面举个例子：
+其实，在 js 中遍历一个对象的时候，是不能遍历到该对象所指向的`prototype`原型链上面的属性和方法，只能遍历到对象上本身的属性和方法。下面举个例子：
 
 ```javascript
-function People(){
-  this.defaults = {}
-  this.say = ()=>{}
+function People() {
+  this.defaults = {};
+  this.say = () => {};
 }
 
-People.prototype.sleep = function(){}
+People.prototype.sleep = function() {};
 
-const demo = new People()
+const demo = new People();
 
-for(const key in axios){
-  console.log(key)
+for (const key in axios) {
+  console.log(key);
 }
 
 //  defaults,say
 ```
 
-上面代码示例中输出的结果是`defaults,say`，虽然`sleep`方法可以通过`demo.sleep`去访问，但是却不能通过遍历去访问。所以才会需要以上2行代码，分别遍历挂载`Axios.prototype`和`context`上面的属性和方法到`instance`函数上。
+上面代码示例中输出的结果是`defaults,say`，虽然`sleep`方法可以通过`demo.sleep`去访问，但是却不能通过遍历去访问。所以才会需要以上 2 行代码，分别遍历挂载`Axios.prototype`和`context`上面的属性和方法到`instance`函数上。
 
 还有人可能会发现，`utils.extend(instance, Axios.prototype, context)`是传入了三个参数，`utils.extend(instance, context)`指传了两个参数。
 
@@ -141,11 +139,11 @@ function createInstance(config) {
   const instance = Axios.prototype.request.bind(context);
 
   // 将Axios.prototype中的request，post等方法挂载到instance请求函数中
-  Object.keys(Axios.prototype).forEach(key => {
+  Object.keys(Axios.prototype).forEach((key) => {
     instance[key] = Axios.prototype[key].bind(context);
   });
   // 将context中的defaultConfig挂载到instance请求函数中
-  Object.keys(context).forEach(key => {
+  Object.keys(context).forEach((key) => {
     instance[key] = context[key];
   });
   return instance;

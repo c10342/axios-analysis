@@ -79,20 +79,18 @@ module.exports = function xhrAdapter(config) {
 }
 ```
 
-
 ## 实现流程
 
 我们通过上面的代码可以看见 axios 的 `客户端防御 XSRF` 实现起来是非常简单的。流程如下：
 
-1、首先判断当前环境是否为标准的浏览器环境，因为是要结合cookie来使用的。非标准浏览器环境（比如react-native）或者node环境是不能使用的，因为没有cookie这种概念
+1、首先判断当前环境是否为标准的浏览器环境，因为是要结合 cookie 来使用的。非标准浏览器环境（比如 react-native）或者 node 环境是不能使用的，因为没有 cookie 这种概念
 
-2、如果是开启了跨域请求携带cookie或者是同源请求，并且config配置项中存在`xsrfCookieName`，就会根据`xsrfCookieName`字段的值去读取cookie
+2、如果是开启了跨域请求携带 cookie 或者是同源请求，并且 config 配置项中存在`xsrfCookieName`，就会根据`xsrfCookieName`字段的值去读取 cookie
 
-3、如果cookie值存在，就会根据`xsrfHeaderName`配置项设置对应的请求头
+3、如果 cookie 值存在，就会根据`xsrfHeaderName`配置项设置对应的请求头
 
 ## 总结
 
-通过本章节的学习，我们了解到了XSRF(CSRF)的攻击原理和过程，也了解到了一些防御的手段。但是需要注意的是axios的XSRF防御只能在标准浏览器中才能使用，因为需要读取到cookie，非标准浏览器或者node是没有cookie这种概念的
-
+通过本章节的学习，我们了解到了 XSRF(CSRF)的攻击原理和过程，也了解到了一些防御的手段。但是需要注意的是 axios 的 XSRF 防御只能在标准浏览器中才能使用，因为需要读取到 cookie，非标准浏览器或者 node 是没有 cookie 这种概念的
 
 在下一个章节，我们将会分析 `isURLSameOrigin 函数` 的实现

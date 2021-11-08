@@ -284,10 +284,10 @@ class Middleware {
       // 所有中间件放到一个数组中
       const cbs = [resolveFn, ...this.cbs, callback];
       const dispatch = (index = 0) => {
-      // 从第0个中间件开始执行
+        // 从第0个中间件开始执行
         const fn = cbs[index];
         // next函数被调用之后就会执行下一个中间件
-        const next = () => dispatch(++index)
+        const next = () => dispatch(++index);
         // 执行中间件，同时还要捕获错误
         fn(ctx, next).catch((error) => {
           reject(error);
@@ -352,7 +352,7 @@ instance.use(async (ctx, next) => {
 instance.use(async (ctx, next) => {
   ctx.request.age = "11";
   await next();
-  ctx.response.bobby = ['睡觉','学习'];
+  ctx.response.bobby = ["睡觉", "学习"];
 });
 
 instance
@@ -387,15 +387,15 @@ instance.use(async (ctx, next) => {
 instance.use(async (ctx, next) => {
   ctx.request.age = "11";
   await next();
-  ctx.response.bobby = ['睡觉','学习'];
+  ctx.response.bobby = ["睡觉", "学习"];
 });
 ```
 
-图片的红线实际上就是`await next()`，next函数是一个分界点，next函数前面部分为请求拦截部分，next函数部分后面为响应拦截部分。
+图片的红线实际上就是`await next()`，next 函数是一个分界点，next 函数前面部分为请求拦截部分，next 函数部分后面为响应拦截部分。
 
 我们可以的出一个完整的请求，中间件执行顺序如下：
 
-`ctx.request.name = "张三"` --> `ctx.request.age = "11"` --> `adapter` --> `ctx.response.bobby = ['睡觉','学习']` -->  `ctx.response.sex = "男"`
+`ctx.request.name = "张三"` --> `ctx.request.age = "11"` --> `adapter` --> `ctx.response.bobby = ['睡觉','学习']` --> `ctx.response.sex = "男"`
 
 经过分析，我们发现，中间件写在前面的，请求拦截部分先执行，响应拦截部分的后执行，这是有洋葱模型所决定的执行顺序
 

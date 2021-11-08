@@ -19,7 +19,7 @@ axios
   .get("/user/12345", {
     cancelToken: source.token,
   })
-  .catch(function (thrown) {
+  .catch(function(thrown) {
     if (axios.isCancel(thrown)) {
       console.log("Request canceled", thrown.message);
     } else {
@@ -282,7 +282,6 @@ function CancelToken(executor) {
   executor(function cancel(message) {
     // ...
     resolvePromise();
-
   });
 }
 ```
@@ -321,7 +320,7 @@ function xhr(config = {}) {
 }
 
 let cancel;
-const cancelToken = new CancelToken(function (c) {
+const cancelToken = new CancelToken(function(c) {
   cancel = c;
 });
 
@@ -335,6 +334,6 @@ cancel();
 
 ## 总结
 
-通过本章节的学习，相信你已经知道了axios取消请求的实现过程以及原理了。而且通过我们的简单代码实现，应该会有了更加深刻的理解
+通过本章节的学习，相信你已经知道了 axios 取消请求的实现过程以及原理了。而且通过我们的简单代码实现，应该会有了更加深刻的理解
 
 下一章节，我们将会分析 `http 请求处理函数` 的实现
