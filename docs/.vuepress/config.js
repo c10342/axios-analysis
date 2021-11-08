@@ -56,7 +56,17 @@ module.exports = {
       ],
       '/wx-axios/': [
         '01-prepare',  
-        '02-instance-create',  
+        '02-InterceptorManager',  
+        '03-WxAxios',
+        '04-adapter',
+        '05-transformData',
+        '06-XSRF',
+        '07-authentication',
+        '08-request',
+        '09-download',
+        '10-upload',
+        '11-config',
+        '12-summary'
       ]
     }
   }
