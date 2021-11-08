@@ -60,7 +60,7 @@ function uploadAdapter(config) {
         reject(cancel);
       });
     }
-    request = wx.downloadFile(options);
+    request = wx.uploadFile(options);
     if (config.onUploadProgress) {
       request.onProgressUpdate(config.onUploadProgress);
     }
