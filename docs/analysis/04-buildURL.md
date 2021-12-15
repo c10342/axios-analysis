@@ -117,6 +117,8 @@ module.exports = function buildURL(url, params, paramsSerializer) {
 
 - 值为数组的参数，查询参数的 key 值需要添加`[]`标识为一个数组
 
+- 值为不是为数组的，把值变成数组
+
 - 值为`Date`类型的需要使用`toISOString`转化为字符串
 
 - 值是对象的情况下，使用 JSON.stringify 转化为字符串

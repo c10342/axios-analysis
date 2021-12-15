@@ -308,7 +308,7 @@ var defaults = {
 //   socket路径，该配置项仅限于node环境
   socketPath: null, // 默认
 
-  自定义代理，该配置项仅限于node环境
+  // 自定义代理，该配置项仅限于node环境
   httpAgent: new http.Agent({ keepAlive: true }),
   httpsAgent: new https.Agent({ keepAlive: true }),
 

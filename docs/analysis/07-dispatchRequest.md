@@ -217,7 +217,6 @@ const config = {
     get: { b: 2 },
     post: { c: 3 },
     a: 1,
-    b: 2,
     c: 3,
     d: 4,
   },
@@ -230,7 +229,6 @@ const config = {
 const config = {
   headers: {
     a: 1,
-    b: 2,
     c: 3,
     d: 4,
   },

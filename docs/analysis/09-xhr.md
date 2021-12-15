@@ -153,7 +153,7 @@ module.exports = function xhrAdapter(config) {
       // 这段代码的逻辑很简单。如果 cookie 中包含 XSRF-TOKEN 这个字段，
       //   就把 header 中 X-XSRF-TOKEN 字段的值设为 XSRF-TOKEN 对应的值
 
-      // `withCredentials`配置参数为`true`并且是同源请求
+      // `withCredentials`配置参数为`true`或者是同源请求
       // isURLSameOrigin涉及到一些知识点，需要重点分析
       var xsrfValue =
         (config.withCredentials || isURLSameOrigin(fullPath)) &&
