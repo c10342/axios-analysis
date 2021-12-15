@@ -20,7 +20,7 @@ function getDefaultAdapter() {
     // 浏览器环境下的
     adapter = require('./adapters/xhr');
   } else if (typeof process !== 'undefined' && Object.prototype.toString.call(process) === '[object process]') {
-    // node环境
+    // node环境，根据process对象判断是否为node环境
     adapter = require('./adapters/http');
   }
   return adapter;
